@@ -1,0 +1,26 @@
+{
+    "clients": {
+        "total": 100,
+        "per_round": 10
+    },
+    "data": {
+        "loading": "static",
+        "partition": {
+            "size": 600
+        },
+        "IID": true
+    },
+    "federated_learning": {
+        "rounds": 10000,
+        "target_accuracy": 0.99,
+        "task": "train",
+        "epochs": 5,
+        "batch_size": 10
+    },
+    "model": "FashionMNIST",
+    "paths": {
+        "data": "./data",
+        "model": "./models"
+    },
+    "server": "basic"
+}
