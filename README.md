@@ -48,3 +48,5 @@ python run.py
 **FLSim** uses a JSON file to manage the configuration parameters for a federated learning simulation. Provided in the repository is a generic template and three preconfigured simulation files for the CIFAR-10, FashionMNIST, and MNIST datasets.
 
 For a detailed list of configuration options, see the [wiki page](https://github.com/iQua/flsim/wiki/Configuration).
+
+If you have any questions, please feel free to contact Hao Wang (haowang@ece.utoronto.ca)
