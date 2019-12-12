@@ -1,16 +1,21 @@
-# flsim
+# FLSim
 
 ## About
 
-Welcome to **flsim**, a PyTorch based federated learning simulation framework, created for experimental research in a paper for [IEEE INFOCOM 2020](https://infocom2020.ieee-infocom.org).
+Welcome to **FLSim**, a PyTorch based federated learning simulation framework, created for experimental research in a paper accepted by [IEEE INFOCOM 2020](https://infocom2020.ieee-infocom.org).:
+
+```
+Hao Wang, Zakhary Kaplan, Di Niu, Baochun Li. “Optimizing Federated Learning on Non-IID Data with Reinforcement Learning,” in the Proceedings of IEEE INFOCOM, Beijing, China, April 27-30, 2020.
+```
+
 
 ## Installation
 
-To install **flsim**, all that needs to be done is clone this repository to the desired directory.
+To install **FLSim**, all that needs to be done is clone this repository to the desired directory.
 
 ### Dependencies
 
-**flsim** uses [Anaconda](https://www.anaconda.com/distribution/) to manage Python and it's dependencies, listed in [`environment.yml`](environment.yml). To install the `fl-py37` Python environment, set up Anaconda (or Miniconda), then download the environment dependencies with:
+**FLSim** uses [Anaconda](https://www.anaconda.com/distribution/) to manage Python and it's dependencies, listed in [`environment.yml`](environment.yml). To install the `fl-py37` Python environment, set up Anaconda (or Miniconda), then download the environment dependencies with:
 
 ```shell
 conda env -n fl-py37 -f environment.yml
@@ -41,6 +46,6 @@ python run.py
 
 ##### `config.json` files
 
-**flsim** uses a JSON file to manage the configuration parameters for a federated learning simulation. Provided in the repository is a generic template and three preconfigured simulation files for the CIFAR-10, FashionMNIST, and MNIST datasets.
+**FLSim** uses a JSON file to manage the configuration parameters for a federated learning simulation. Provided in the repository is a generic template and three preconfigured simulation files for the CIFAR-10, FashionMNIST, and MNIST datasets.
 
 For a detailed list of configuration options, see the [wiki page](https://github.com/iQua/flsim/wiki/Configuration).
