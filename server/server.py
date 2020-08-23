@@ -5,7 +5,7 @@ import numpy as np
 import pickle
 import random
 import sys
-from threading import Thread
+from multiprocessing import Process, Pool
 import torch
 import utils.dists as dists  # pylint: disable=no-name-in-module
 
@@ -169,12 +169,18 @@ class Server(object):
         self.configuration(sample_clients)
 
         # Run clients using multithreading for better parallelism
-        threads = [Thread(target=client.run) for client in sample_clients]
-        [t.start() for t in threads]
-        [t.join() for t in threads]
+        # threads = [Thread(target=client.run) for client in sample_clients]
+        # [t.start() for t in threads]
+        # [t.join() for t in threads]
+
+        with Pool() as pool:
+            processes = [pool.apply_async(client.run, ()) \
+                for client in sample_clients]
+            proc_results = [proc.get() for proc in processes]
 
         # Recieve client updates
-        reports = self.reporting(sample_clients)
+        # reports = self.reporting(sample_clients)
+        reports = self.reporting(sample_clients, proc_results)
 
         # Perform weight aggregation
         logging.info('Aggregating updates')
@@ -241,6 +247,21 @@ class Server(object):
         logging.info('Reports recieved: {}'.format(len(reports)))
         assert len(reports) == len(sample_clients)
 
+        return reports
+
+    def reporting(self, sample_clients, proc_results):
+        reports = []
+        #get every client path
+        sample_client_dict = {
+            client.client_id: client for client in sample_clients}
+        
+        for client_id, report in proc_results:
+            sample_client_dict[client_id].report = report
+            reports.append(report)
+        
+        logging.info('Reports recieved: {}'.format(len(reports)))
+        assert len(reports) == len(sample_clients)
+        
         return reports
 
     def aggregation(self, reports):

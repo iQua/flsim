@@ -1,7 +1,7 @@
 {
     "clients": {
         "total": 100,
-        "per_round": 10
+        "per_round": 3
     },
     "data": {
         "loading": "static",
@@ -14,7 +14,7 @@
         "rounds": 10,
         "target_accuracy": 0.99,
         "task": "train",
-        "epochs": 5,
+        "epochs": 1,
         "batch_size": 10
     },
     "model": "MNIST",

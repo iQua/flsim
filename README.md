@@ -50,3 +50,16 @@ python run.py
 For a detailed list of configuration options, see the [wiki page](https://github.com/iQua/flsim/wiki/Configuration).
 
 If you have any questions, please feel free to contact Hao Wang (haowang@ece.utoronto.ca)
+
+
+
+```
+@inproceedings{wang2020optimizing,
+  title={Optimizing Federated Learning on Non-IID Data with Reinforcement Learning},
+  author={Wang, Hao and Kaplan, Zakhary and Niu, Di and Li, Baochun},
+  booktitle={IEEE INFOCOM 2020-IEEE Conference on Computer Communications},
+  pages={1698--1707},
+  year={2020},
+  organization={IEEE}
+}
+```

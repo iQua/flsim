@@ -79,7 +79,7 @@ class Client(object):
 
     def run(self):
         # Perform federated learning task
-        {
+        return {
             "train": self.train()
         }[self.task]
 
@@ -109,6 +109,8 @@ class Client(object):
         if self.do_test:
             testloader = fl_model.get_testloader(self.testset, 1000)
             self.report.accuracy = fl_model.test(self.model, testloader)
+        
+        return (self.client_id, self.report)
 
     def test(self):
         # Perform model testing
@@ -121,3 +123,4 @@ class Report(object):
     def __init__(self, client):
         self.client_id = client.client_id
         self.num_samples = len(client.data)
+        self.weights = None
