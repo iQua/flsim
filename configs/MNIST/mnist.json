@@ -11,7 +11,7 @@
         "IID": true
     },
     "federated_learning": {
-        "rounds": 10000,
+        "rounds": 10,
         "target_accuracy": 0.99,
         "task": "train",
         "epochs": 5,
