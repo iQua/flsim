@@ -17,7 +17,7 @@ To install **FLSim**, all that needs to be done is clone this repository to the 
 **FLSim** uses [Anaconda](https://www.anaconda.com/distribution/) to manage Python and it's dependencies, listed in [`environment.yml`](environment.yml). To install the `fl-py37` Python environment, set up Anaconda (or Miniconda), then download the environment dependencies with:
 
 ```shell
-conda env -n fl-py37 -f environment.yml
+conda env create -f environment.yml
 ```
 
 ## Usage
