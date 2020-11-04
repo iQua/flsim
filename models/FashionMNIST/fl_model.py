@@ -11,6 +11,11 @@ lr = 0.01
 momentum = 0.5
 log_interval = 10
 
+# Cuda settings
+use_cuda = torch.cuda.is_available()
+device = torch.device (  # pylint: disable=no-member
+    'cuda' if use_cuda else 'cpu')
+
 
 class Generator(load_data.Generator):
     """Generator for FashionMNIST dataset."""
@@ -69,8 +74,9 @@ def get_testloader(testset, batch_size):
 
 def extract_weights(model):
     weights = []
-    for name, weight in model.named_parameters():
-        weights.append((name, weight.data))
+    for name, weight in model.to(torch.device('cpu')).named_parameters():  # pylint: disable=no-member
+        if weight.requires_grad:
+            weights.append((name, weight.data))
 
     return weights
 
@@ -84,11 +90,17 @@ def load_weights(model, weights):
 
 
 def train(model, trainloader, optimizer, epochs):
+    model.to(device)
+    model.train()
     criterion = nn.CrossEntropyLoss()
+
     for epoch in range(1, epochs + 1):
-        for batch_id, (image, label) in enumerate(trainloader):
-            output = model(image)
-            loss = criterion(output, label)
+        for batch_id, data in enumerate(trainloader):
+            inputs, labels = data
+            inputs, labels = inputs.to(device), labels.to(device)
+
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
 
             optimizer.zero_grad()
             loss.backward()
@@ -99,15 +111,20 @@ def train(model, trainloader, optimizer, epochs):
 
 
 def test(model, testloader):
+    model.to(device)
+    model.eval()
+
     with torch.no_grad():
         correct = 0
         total = 0
-        for image, label in testloader:
-            outputs = model(image)
+        for data in testloader:
+            images, labels = data
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
             predicted = torch.argmax(  # pylint: disable=no-member
                 outputs, dim=1)
-            total += label.size(0)
-            correct += (predicted == label).sum().item()
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
 
     accuracy = correct / total
     logging.debug('Accuracy: {:.2f}%'.format(100 * accuracy))
