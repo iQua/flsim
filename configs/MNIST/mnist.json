@@ -8,7 +8,7 @@
         "partition": {
             "size": 600
         },
-        "IID": true
+        "IID": false
     },
     "federated_learning": {
         "rounds": 10000,
