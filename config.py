@@ -64,3 +64,17 @@ class Config(object):
 
         # -- Server --
         self.server = config['server']
+
+        # -- Sync --
+        fields = ['type', 'interval']
+        defaults = ('sync', 60)
+        params = [config['sync'].get(field, defaults[i])
+                  for i, field in enumerate(fields)]
+        self.sync = namedtuple('sync', fields)(*params)
+
+        # -- Link Speed --
+        fields = ['min', 'max', 'std']
+        defaults = (200, 5000, 100)
+        params = [config['link_speed'].get(field, defaults[i])
+                  for i, field in enumerate(fields)]
+        self.link = namedtuple('link_speed', fields)(*params)

@@ -92,10 +92,15 @@ class Server(object):
 
         # Make simulated clients
         clients = []
+        speed = []
         for client_id in range(num_clients):
 
             # Create new client
             new_client = client.Client(client_id)
+
+            # Set link speed
+            new_client.set_link(self.config)
+            speed.append(new_client.speed_mean)
 
             if not IID:  # Configure clients for non-IID data
                 if self.config.data.bias:
@@ -116,6 +121,7 @@ class Server(object):
             clients.append(new_client)
 
         logging.info('Total clients: {}'.format(len(clients)))
+        logging.info('Speed distribution: {} Kbps'.format([s for s in speed]))
 
         if loader == 'bias':
             logging.info('Label distribution: {}'.format(
@@ -136,30 +142,31 @@ class Server(object):
         target_accuracy = self.config.fl.target_accuracy
         reports_path = self.config.paths.reports
 
-        if target_accuracy:
-            logging.info('Training: {} rounds or {}% accuracy\n'.format(
-                rounds, 100 * target_accuracy))
-        else:
-            logging.info('Training: {} rounds\n'.format(rounds))
+        if self.config.sync.type == "sync":
+            if target_accuracy:
+                logging.info('Training: {} rounds or {}% accuracy\n'.format(
+                    rounds, 100 * target_accuracy))
+            else:
+                logging.info('Training: {} rounds\n'.format(rounds))
 
-        # Perform rounds of federated learning
-        for round in range(1, rounds + 1):
-            logging.info('**** Round {}/{} ****'.format(round, rounds))
+            # Perform rounds of federated learning
+            for round in range(1, rounds + 1):
+                logging.info('**** Round {}/{} ****'.format(round, rounds))
 
-            # Run the federated learning round
-            accuracy = self.round()
+                # Run the federated learning round
+                accuracy = self.sync_round()
 
-            # Break loop when target accuracy is met
-            if target_accuracy and (accuracy >= target_accuracy):
-                logging.info('Target accuracy reached.')
-                break
+                # Break loop when target accuracy is met
+                if target_accuracy and (accuracy >= target_accuracy):
+                    logging.info('Target accuracy reached.')
+                    break
 
         if reports_path:
             with open(reports_path, 'wb') as f:
                 pickle.dump(self.saved_reports, f)
             logging.info('Saved reports: {}'.format(reports_path))
 
-    def round(self):
+    def sync_round(self):
         import fl_model  # pylint: disable=import-error
 
         # Select clients to participate in the round

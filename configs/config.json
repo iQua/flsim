@@ -1,7 +1,7 @@
 {
     "clients": {
-        "total": 1000,
-        "per_round": 20,
+        "total": 100,
+        "per_round": 10,
         "label_distribution": "uniform",
         "do_test": false,
         "test_partition": 0.2
@@ -22,7 +22,7 @@
         }
     },
     "federated_learning": {
-        "rounds": 200,
+        "rounds": 100,
         "target_accuracy": 0.95,
         "task": "train",
         "epochs": 5,
@@ -34,5 +34,14 @@
         "model": "./models",
         "reports": "reports.pkl"
     },
-    "server": "basic"
+    "server": "basic",
+    "sync": {
+        "type": "sync",
+        "interval": 60
+    },
+    "link_speed": {
+        "min": 200,
+        "max": 5000,
+        "std": 100
+    }
 }

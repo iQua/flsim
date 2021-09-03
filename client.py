@@ -2,7 +2,9 @@ import logging
 import torch
 import torch.nn as nn
 import torch.optim as optim
-
+import random
+import os
+import time
 
 class Client(object):
     """Simulated federated learning client."""
@@ -54,6 +56,14 @@ class Client(object):
         else:
             self.trainset = data
 
+    # Set the speed for the link between server and client
+    def set_link(self, config):
+        # Set the Gaussian distribution for link speed in Kbytes
+        self.speed_min = config.link.min
+        self.speed_max = config.link.max
+        self.speed_mean = random.uniform(self.speed_min, self.speed_max)
+        self.speed_std = config.link.std
+
     def configure(self, config):
         import fl_model  # pylint: disable=import-error
 
@@ -77,11 +87,20 @@ class Client(object):
         # Create optimizer
         self.optimizer = fl_model.get_optimizer(self.model)
 
+        # Set the link speed and delay for the upcoming run
+        model_size = os.path.getsize(path) / 1e3  # model size in Kbytes
+        link_speed = random.normalvariate(self.speed_mean, self.speed_std)
+        link_speed = max(min(link_speed, self.speed_max), self.speed_min)
+        self.delay = model_size / link_speed  # upload delay in sec
+        logging.info("client delay {} s".format(self.delay))
+
     def run(self):
         # Perform federated learning task
         {
             "train": self.train()
         }[self.task]
+
+        time.sleep(self.delay)
 
     def get_report(self):
         # Report results to server.
