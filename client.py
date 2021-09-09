@@ -92,7 +92,7 @@ class Client(object):
         link_speed = random.normalvariate(self.speed_mean, self.speed_std)
         link_speed = max(min(link_speed, self.speed_max), self.speed_min)
         self.delay = model_size / link_speed  # upload delay in sec
-        logging.info("client delay {} s".format(self.delay))
+        logging.info("client mean delay {} s".format(self.delay))
 
     def run(self):
         # Perform federated learning task
@@ -100,7 +100,7 @@ class Client(object):
             "train": self.train()
         }[self.task]
 
-        time.sleep(self.delay)
+        #time.sleep(self.delay)
 
     def get_report(self):
         # Report results to server.

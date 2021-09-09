@@ -7,6 +7,7 @@ import random
 import sys
 from threading import Thread
 import torch
+import time
 import utils.dists as dists  # pylint: disable=no-name-in-module
 
 
@@ -138,28 +139,36 @@ class Server(object):
 
     # Run federated learning
     def run(self):
+        type = self.config.sync.type
         rounds = self.config.fl.rounds
         target_accuracy = self.config.fl.target_accuracy
         reports_path = self.config.paths.reports
 
-        if self.config.sync.type == "sync":
-            if target_accuracy:
-                logging.info('Training: {} rounds or {}% accuracy\n'.format(
-                    rounds, 100 * target_accuracy))
-            else:
-                logging.info('Training: {} rounds\n'.format(rounds))
+        if target_accuracy:
+            logging.info('Training: {} rounds or {}% accuracy\n'.format(
+                rounds, 100 * target_accuracy))
+        else:
+            logging.info('Training: {} rounds\n'.format(rounds))
 
-            # Perform rounds of federated learning
-            for round in range(1, rounds + 1):
-                logging.info('**** Round {}/{} ****'.format(round, rounds))
+        # Perform rounds of federated learning
+        for round in range(1, rounds + 1):
+            logging.info('**** {} Round {}/{} ****'.format(type, round, rounds))
 
-                # Run the federated learning round
+            if self.config.sync.type == "sync":
+                # Run the sync federated learning round
                 accuracy = self.sync_round()
+            elif self.config.sync.type == "async":
+                # Perform async rounds of federated learning with certain
+                # grouping strategy
+                T_async = self.config.sync.interval
+                accuracy = self.async_round(T_async)
+            else:
+                raise NotImplementedError
 
-                # Break loop when target accuracy is met
-                if target_accuracy and (accuracy >= target_accuracy):
-                    logging.info('Target accuracy reached.')
-                    break
+            # Break loop when target accuracy is met
+            if target_accuracy and (accuracy >= target_accuracy):
+                logging.info('Target accuracy reached.')
+                break
 
         if reports_path:
             with open(reports_path, 'wb') as f:
@@ -209,7 +218,63 @@ class Server(object):
         logging.info('Average accuracy: {:.2f}%\n'.format(100 * accuracy))
         return accuracy
 
-    # Federated learning phases
+    def async_round(self, T_async):
+        import fl_model  # pylint: disable=import-error
+
+        # Select clients to participate in the round
+        sample_clients = self.selection()
+        virtual_groups = [[client] for client in sample_clients]
+
+        # Configure sample clients
+        self.configuration(sample_clients)
+
+        # Run virtual groups asynchronously for a certain period T_async
+        threads = [Thread(target=self.sync_group(group, T_async)) for group in virtual_groups]
+        [t.start() for t in threads]
+        [t.join() for t in threads]
+
+        # Recieve client updates
+        reports = self.reporting(sample_clients)
+
+        # Perform weight aggregation
+        logging.info('Aggregating updates')
+        updated_weights = self.aggregation(reports)
+
+        # Load updated weights
+        fl_model.load_weights(self.model, updated_weights)
+
+        # Extract flattened weights (if applicable)
+        if self.config.paths.reports:
+            self.save_reports(round, reports)
+
+        # Save updated global model
+        self.save_model(self.model, self.config.paths.model)
+
+        # Test global model accuracy
+        if self.config.clients.do_test:  # Get average accuracy from client reports
+            accuracy = self.accuracy_averaging(reports)
+        else:  # Test updated model on server
+            testset = self.loader.get_testset()
+            batch_size = self.config.fl.batch_size
+            testloader = fl_model.get_testloader(testset, batch_size)
+            accuracy = fl_model.test(self.model, testloader)
+
+        logging.info('Average accuracy: {:.2f}%\n'.format(100 * accuracy))
+        return accuracy
+
+    def sync_group(self, client_list, T_async):
+        """
+        Synchronous group updates of a given list if clients
+        """
+        start_time = time.time()
+        it = 0
+        while time.time() - start_time < T_async:
+            it += 1
+            threads = [Thread(target=client.run) for client in client_list]
+            [t.start() for t in threads]
+            [t.join() for t in threads]
+
+        logging.info('Train {} iterations on clients {}'.format(it, client_list))
 
     def selection(self):
         # Select devices to participate in round
