@@ -67,9 +67,9 @@ class Client(object):
 
     def set_delay(self, config):
         # Sample from the link speed distribution
-        model_path = self.model_path = config.paths.model
+        model_path = config.paths.model + '/global'
         # Set the link speed and delay for the upcoming run
-        model_size = os.path.getsize(path) / 1e3  # model size in Kbytes
+        model_size = os.path.getsize(model_path) / 1e3  # model size in Kbytes
         link_speed = random.normalvariate(self.speed_mean, self.speed_std)
         link_speed = max(min(link_speed, self.speed_max), self.speed_min)
         self.delay = model_size / link_speed  # upload delay in sec
@@ -97,6 +97,30 @@ class Client(object):
         # Create optimizer
         self.optimizer = fl_model.get_optimizer(self.model)
 
+    def async_configure(self, config, download_time):
+        import fl_model  # pylint: disable=import-error
+
+        # Extract from config
+        model_path = self.model_path = config.paths.model
+
+        # Download from server
+        config = self.download(config)
+
+        # Extract machine learning task from config
+        self.task = config.fl.task
+        self.epochs = config.fl.epochs
+        self.batch_size = config.fl.batch_size
+
+        # Download most recent global model
+        path = model_path + '/global' + '%.3f' % download_time
+        self.model = fl_model.Net()
+        self.model.load_state_dict(torch.load(path))
+        self.model.eval()
+        logging.info('Load global model: {}'.format(path))
+
+        # Create optimizer
+        self.optimizer = fl_model.get_optimizer(self.model)
+
 
     def run(self):
         # Perform federated learning task
@@ -119,8 +143,6 @@ class Client(object):
         trainloader = fl_model.get_trainloader(self.trainset, self.batch_size)
         fl_model.train(self.model, trainloader,
                        self.optimizer, self.epochs)
-        logging.info('Training on client #{}, mean delay {}s finished'.format(
-            self.client_id, self.delay))
 
         # Extract model weights and biases
         weights = fl_model.extract_weights(self.model)
@@ -133,8 +155,6 @@ class Client(object):
         if self.do_test:
             testloader = fl_model.get_testloader(self.testset, 1000)
             self.report.accuracy = fl_model.test(self.model, testloader)
-        logging.info('Test on client #{}, mean delay {}s'.format(
-            self.client_id, self.delay))
 
     def test(self):
         # Perform model testing

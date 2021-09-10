@@ -107,6 +107,6 @@ venv.bak/
 data/
 
 # Global model files
-**/global
+**/global**
 
 .idea*

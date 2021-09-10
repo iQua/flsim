@@ -16,9 +16,13 @@ class Group(object):
     def __init__(self, client_list):
         self.clients = client_list
 
-    def set_delay(self):
+    def set_download_time(self, download_time):
+        self.download_time = download_time
+
+    def set_aggregate_time(self):
         """Only run after client configuration"""
-        self.delay = max([c.delay for c in self.clients])
+        self.aggregate_time = self.download_time + \
+            max([c.delay for c in self.clients])
 
 class Record(object):
     """Training records."""
@@ -96,7 +100,7 @@ class Server(object):
 
         # Set up global model
         self.model = fl_model.Net()
-        self.save_model(self.model, model_path)
+        self.async_save_model(self.model, model_path, 0.0)
 
         # Extract flattened weights (if applicable)
         if self.config.paths.reports:
@@ -214,10 +218,11 @@ class Server(object):
         sample_groups = self.selection()
         sample_clients = []
         for group in sample_groups:
-            for c in group:
-                c.set_delay(self.config)
-                sample_clients.append(c)
-            group.set_delay()
+            for client in group.clients:
+                client.set_delay(self.config)
+                sample_clients.append(client)
+            group.set_download_time(T_old)
+            group.set_aggregate_time()
 
         # Configure sample clients
         self.configuration(sample_clients)
@@ -270,28 +275,30 @@ class Server(object):
         sample_groups = self.selection()
         sample_clients = []
         for group in sample_groups:
-            for c in group:
-                c.set_delay(self.config)
-                sample_clients.append(c)
-            group.set_delay()
+            for client in group.clients:
+                client.set_delay(self.config)
+                sample_clients.append(client)
+            group.set_download_time(T_old)
+            group.set_aggregate_time()
 
         # Put the group into a queue according to its delay in ascending order
         queue = PriorityQueue()
         for group in sample_groups:
-            queue.put((T_old + group.delay, group.clients))
+            queue.put((group.aggregate_time, group))
 
         # Start the asynchronous updates
-        T_cur = T_old
         while not queue.empty():
-            select_group = queue.get()
+            select_group = queue.get()[1]
             select_clients = select_group.clients
-            self.configuration(select_clients, global_model_path)
+            self.async_configuration(select_clients, select_group.download_time)
 
             threads = [Thread(target=client.run) for client in select_clients]
             [t.start() for t in threads]
             [t.join() for t in threads]
-            logging.info('Training finished on clients {}'.format(select_clients))
-            T_cur = T_cur + select_group.delay  # Update current time
+            T_cur = select_group.aggregate_time  # Update current time
+            logging.info(
+                'Training finished on clients {}'.format(select_clients))
+            logging.info('At time {} s'.format(T_cur))
 
             # Recieve client updates
             reports = self.reporting(select_clients)
@@ -308,7 +315,7 @@ class Server(object):
                 self.save_reports(round, reports)
 
             # Save updated global model
-            self.save_model(self.model, self.config.paths.model)
+            self.async_save_model(self.model, self.config.paths.model, T_cur)
 
             # Test global model accuracy
             if self.config.clients.do_test:  # Get average accuracy from client reports
@@ -325,7 +332,9 @@ class Server(object):
             # Insert the next aggregation of the group into queue
             # if time permitted
             if T_cur - T_old <= T_async:
-                queue.put((T_cur + group.delay, group.clients))
+                select_group.set_download_time(T_cur)
+                select_group.set_aggregate_time()
+                queue.put((select_group.aggregate_time, select_group))
 
         return self.records.get_latest_acc(), self.records.get_latest_t()
 
@@ -360,8 +369,28 @@ class Server(object):
             # Extract config for client
             config = self.config
 
-            # Continue configuraion on client
+            # Continue configuration on client
             client.configure(config)
+
+    def async_configuration(self, sample_clients, download_time):
+        loader_type = self.config.loader
+        loading = self.config.data.loading
+
+        if loading == 'dynamic':
+            # Create shards if applicable
+            if loader_type == 'shard':
+                self.loader.create_shards()
+
+        # Configure selected clients for federated learning task
+        for client in sample_clients:
+            if loading == 'dynamic':
+                self.set_client_data(client)  # Send data partition to client
+
+            # Extract config for client
+            config = self.config
+
+            # Continue configuration on client
+            client.async_configure(config, download_time)
 
     def reporting(self, sample_clients):
         # Recieve reports from sample clients
@@ -477,6 +506,11 @@ class Server(object):
 
     def save_model(self, model, path):
         path += '/global'
+        torch.save(model.state_dict(), path)
+        logging.info('Saved global model: {}'.format(path))
+
+    def async_save_model(self, model, path, download_time):
+        path += '/global' + '%.3f' % download_time
         torch.save(model.state_dict(), path)
         logging.info('Saved global model: {}'.format(path))
 
