@@ -13,8 +13,9 @@ class Client(object):
         self.client_id = client_id
 
     def __repr__(self):
-        return 'Client #{}: {} samples in labels: {}'.format(
-            self.client_id, len(self.data), set([label for _, label in self.data]))
+        #return 'Client #{}: {} samples in labels: {}'.format(
+        #    self.client_id, len(self.data), set([label for _, label in self.data]))
+        return 'Client #{}'.format(self.client_id)
 
     # Set non-IID data configurations
     def set_bias(self, pref, bias):
@@ -64,6 +65,15 @@ class Client(object):
         self.speed_mean = random.uniform(self.speed_min, self.speed_max)
         self.speed_std = config.link.std
 
+    def set_delay(self, config):
+        # Sample from the link speed distribution
+        model_path = self.model_path = config.paths.model
+        # Set the link speed and delay for the upcoming run
+        model_size = os.path.getsize(path) / 1e3  # model size in Kbytes
+        link_speed = random.normalvariate(self.speed_mean, self.speed_std)
+        link_speed = max(min(link_speed, self.speed_max), self.speed_min)
+        self.delay = model_size / link_speed  # upload delay in sec
+
     def configure(self, config):
         import fl_model  # pylint: disable=import-error
 
@@ -87,20 +97,12 @@ class Client(object):
         # Create optimizer
         self.optimizer = fl_model.get_optimizer(self.model)
 
-        # Set the link speed and delay for the upcoming run
-        model_size = os.path.getsize(path) / 1e3  # model size in Kbytes
-        link_speed = random.normalvariate(self.speed_mean, self.speed_std)
-        link_speed = max(min(link_speed, self.speed_max), self.speed_min)
-        self.delay = model_size / link_speed  # upload delay in sec
-        logging.info("client mean delay {} s".format(self.delay))
 
     def run(self):
         # Perform federated learning task
         {
             "train": self.train()
         }[self.task]
-
-        #time.sleep(self.delay)
 
     def get_report(self):
         # Report results to server.
@@ -110,12 +112,15 @@ class Client(object):
     def train(self):
         import fl_model  # pylint: disable=import-error
 
-        logging.info('Training on client #{}'.format(self.client_id))
+        logging.info('Training on client #{}, mean delay {}s'.format(
+            self.client_id, self.delay))
 
         # Perform model training
         trainloader = fl_model.get_trainloader(self.trainset, self.batch_size)
         fl_model.train(self.model, trainloader,
                        self.optimizer, self.epochs)
+        logging.info('Training on client #{}, mean delay {}s finished'.format(
+            self.client_id, self.delay))
 
         # Extract model weights and biases
         weights = fl_model.extract_weights(self.model)
@@ -128,6 +133,8 @@ class Client(object):
         if self.do_test:
             testloader = fl_model.get_testloader(self.testset, 1000)
             self.report.accuracy = fl_model.test(self.model, testloader)
+        logging.info('Test on client #{}, mean delay {}s'.format(
+            self.client_id, self.delay))
 
     def test(self):
         # Perform model testing

@@ -1,7 +1,7 @@
 {
     "clients": {
         "total": 100,
-        "per_round": 10,
+        "per_round": 5,
         "label_distribution": "uniform",
         "do_test": false,
         "test_partition": 0.2
@@ -36,7 +36,7 @@
     },
     "server": "basic",
     "sync": {
-        "type": "sync",
+        "type": "async",
         "interval": 5
     },
     "link_speed": {
