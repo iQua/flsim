@@ -13,6 +13,7 @@ lr = 0.01
 momentum = 0.5
 log_interval = 10
 rou = 1
+loss_thres = 0.01
 
 # Cuda settings
 use_cuda = torch.cuda.is_available()
@@ -125,8 +126,12 @@ def train(model, trainloader, optimizer, epochs, reg=None):
             loss.backward()
             optimizer.step()
             if batch_id % log_interval == 0:
-                logging.debug('Epoch: [{}/{}]\tLoss: {:.6f}'.format(
+                logging.info('Epoch: [{}/{}]\tLoss: {:.6f}'.format(
                     epoch, epochs, loss.item()))
+
+            # Stop training if model is already in good shape
+            if loss < loss_thres:
+                return
 
 
 def test(model, testloader):

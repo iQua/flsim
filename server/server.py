@@ -7,9 +7,9 @@ import random
 import sys
 from threading import Thread
 import torch
-import time
 from queue import PriorityQueue
 import utils.dists as dists  # pylint: disable=no-name-in-module
+import os
 
 class Group(object):
     """Basic async group."""
@@ -198,6 +198,7 @@ class Server(object):
             elif self.sync_type == "async":
                 # Perform async rounds of federated learning with certain
                 # grouping strategy
+                self.rm_old_models(self.config.paths.model, T_old)
                 T_async = self.config.sync.interval
                 accuracy, T_new = self.async_round(round, T_old, T_async)
             else:
@@ -224,7 +225,7 @@ class Server(object):
         sample_clients = []
         for group in sample_groups:
             for client in group.clients:
-                client.set_delay(self.config)
+                client.set_delay()
                 sample_clients.append(client)
             group.set_download_time(T_old)
             group.set_aggregate_time()
@@ -232,13 +233,13 @@ class Server(object):
         # Configure sample clients
         self.configuration(sample_clients)
         # Use the max delay in all sample clients as the delay in sync round
-        delay = max([c.delay for c in sample_clients])
+        max_delay = max([c.delay for c in sample_clients])
 
         # Run clients using multithreading for better parallelism
         threads = [Thread(target=client.run) for client in sample_clients]
         [t.start() for t in threads]
         [t.join() for t in threads]
-        T_cur = T_old + delay  # Update current time
+        T_cur = T_old + max_delay  # Update current time
 
         # Recieve client updates
         reports = self.reporting(sample_clients)
@@ -270,7 +271,7 @@ class Server(object):
         self.records.append_acc_record(T_cur, accuracy)
         return accuracy, T_cur
 
-    def async_round(self, round, T_old, T_async,):
+    def async_round(self, round, T_old, T_async):
         """
         Run one async round for T_async
         """
@@ -281,7 +282,7 @@ class Server(object):
         sample_clients = []
         for group in sample_groups:
             for client in group.clients:
-                client.set_delay(self.config)
+                client.set_delay()
                 sample_clients.append(client)
             group.set_download_time(T_old)
             group.set_aggregate_time()
@@ -582,9 +583,20 @@ class Server(object):
         logging.info('Saved global model: {}'.format(path))
 
     def async_save_model(self, model, path, download_time):
-        path += '/global' + '%.3f' % download_time
+        path += '/global_' + '%.3f' % download_time
         torch.save(model.state_dict(), path)
         logging.info('Saved global model: {}'.format(path))
+
+    def rm_old_models(self, path, cur_time):
+        for filename in os.listdir(path):
+            try:
+                model_time = float(filename.split('_')[1])
+                if model_time < cur_time:
+                    os.remove(os.path.join(path, filename))
+                    logging.info('Remove model {}'.format(filename))
+            except Exception as e:
+                logging.debug(e)
+                continue
 
     def save_reports(self, round, reports):
         import fl_model  # pylint: disable=import-error

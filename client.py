@@ -64,15 +64,18 @@ class Client(object):
         self.speed_max = config.link.max
         self.speed_mean = random.uniform(self.speed_min, self.speed_max)
         self.speed_std = config.link.std
-
-    def set_delay(self, config):
-        # Sample from the link speed distribution
+        # Set model size
         model_path = config.paths.model + '/global'
+        if os.path.exists(model_path):
+            self.model_size = os.path.getsize(model_path) / 1e3  # model size in Kbytes
+        else:
+            self.model_size = 1600  # estimated model size in Kbytes
+
+    def set_delay(self):
         # Set the link speed and delay for the upcoming run
-        model_size = os.path.getsize(model_path) / 1e3  # model size in Kbytes
         link_speed = random.normalvariate(self.speed_mean, self.speed_std)
         link_speed = max(min(link_speed, self.speed_max), self.speed_min)
-        self.delay = model_size / link_speed  # upload delay in sec
+        self.delay = self.model_size / link_speed  # upload delay in sec
 
     def configure(self, config):
         import fl_model  # pylint: disable=import-error
@@ -112,7 +115,7 @@ class Client(object):
         self.batch_size = config.fl.batch_size
 
         # Download most recent global model
-        path = model_path + '/global' + '%.3f' % download_time
+        path = model_path + '/global_' + '%.3f' % download_time
         self.model = fl_model.Net()
         self.model.load_state_dict(torch.load(path))
         self.model.eval()

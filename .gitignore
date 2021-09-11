@@ -110,3 +110,4 @@ data/
 **/global**
 
 .idea*
+.DS_Store

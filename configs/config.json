@@ -1,7 +1,7 @@
 {
     "clients": {
-        "total": 100,
-        "per_round": 5,
+        "total": 10,
+        "per_round": 10,
         "label_distribution": "uniform",
         "do_test": false,
         "test_partition": 0.2
