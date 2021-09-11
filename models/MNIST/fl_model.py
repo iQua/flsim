@@ -5,11 +5,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
+import numpy as np
+import time
 
 # Training settings
 lr = 0.01
 momentum = 0.5
 log_interval = 10
+rou = 1
 
 # Cuda settings
 use_cuda = torch.cuda.is_available()
@@ -84,16 +87,41 @@ def load_weights(model, weights):
 
     model.load_state_dict(updated_state_dict, strict=False)
 
+def flatten_weights(weights):
+    # Flatten weights into vectors
+    weight_vecs = []
+    for _, weight in weights:
+        weight_vecs.extend(weight.flatten().tolist())
 
-def train(model, trainloader, optimizer, epochs):
+    return np.array(weight_vecs)
+
+def train(model, trainloader, optimizer, epochs, reg=None):
     model.to(device)
     model.train()
+
+    # Get the snapshot of weights when training starts, if regularization is on
+    if reg is not None:
+        old_weights = flatten_weights(extract_weights(model))
+        old_weights = torch.from_numpy(old_weights)
+
     for epoch in range(1, epochs + 1):
         for batch_id, (image, label) in enumerate(trainloader):
             image, label = image.to(device), label.to(device)
             optimizer.zero_grad()
             output = model(image)
             loss = F.nll_loss(output, label)
+
+            # Add regularization
+            if reg is not None:
+                new_weights = flatten_weights(extract_weights(model))
+                new_weights = torch.from_numpy(new_weights)
+                mse_loss = nn.MSELoss(reduction='sum')
+                l2_loss = rou/2 * mse_loss(new_weights, old_weights)
+                l2_loss = l2_loss.to(torch.float32)
+                logging.debug(
+                    'loss: {} l2_loss: {}'.format(loss.item(), l2_loss))
+                loss += l2_loss
+
             loss.backward()
             optimizer.step()
             if batch_id % log_interval == 0:

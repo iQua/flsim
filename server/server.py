@@ -168,10 +168,14 @@ class Server(object):
 
     # Run federated learning
     def run(self):
-        type = self.config.sync.type
         rounds = self.config.fl.rounds
         target_accuracy = self.config.fl.target_accuracy
         reports_path = self.config.paths.reports
+
+        # Init async parameters
+        self.sync_type = self.config.sync.type
+        self.alpha = self.config.sync.alpha
+        self.staleness_func = self.config.sync.staleness_func
 
         # Init self accuracy records
         self.records = Record()
@@ -185,12 +189,13 @@ class Server(object):
         # Perform rounds of federated learning
         T_old = 0.0
         for round in range(1, rounds + 1):
-            logging.info('**** {} Round {}/{} ****'.format(type, round, rounds))
+            logging.info('**** {} Round {}/{} ****'.format(self.sync_type,
+                                                           round, rounds))
 
-            if self.config.sync.type == "sync":
+            if self.sync_type == "sync":
                 # Run the sync federated learning round
                 accuracy, T_new = self.sync_round(round, T_old)
-            elif self.config.sync.type == "async":
+            elif self.sync_type == "async":
                 # Perform async rounds of federated learning with certain
                 # grouping strategy
                 T_async = self.config.sync.interval
@@ -292,7 +297,7 @@ class Server(object):
             select_clients = select_group.clients
             self.async_configuration(select_clients, select_group.download_time)
 
-            threads = [Thread(target=client.run) for client in select_clients]
+            threads = [Thread(target=client.run(reg=True)) for client in select_clients]
             [t.start() for t in threads]
             [t.join() for t in threads]
             T_cur = select_group.aggregate_time  # Update current time
@@ -305,7 +310,8 @@ class Server(object):
 
             # Perform weight aggregation
             logging.info('Aggregating updates from clients {}'.format(select_clients))
-            updated_weights = self.aggregation(reports)
+            staleness = select_group.aggregate_time - select_group.download_time
+            updated_weights = self.aggregation(reports, staleness)
 
             # Load updated weights
             fl_model.load_weights(self.model, updated_weights)
@@ -348,7 +354,7 @@ class Server(object):
             self.clients, clients_per_round)]
 
         # Grouping strategies to be updated
-        sample_groups = [Group(sample_clients[:3]), Group(sample_clients[3:])]
+        sample_groups = [Group([client]) for client in sample_clients]
 
         return sample_groups
 
@@ -401,8 +407,13 @@ class Server(object):
 
         return reports
 
-    def aggregation(self, reports):
-        return self.federated_averaging(reports)
+    def aggregation(self, reports, staleness=None):
+        if self.sync_type == "sync":
+            return self.federated_averaging(reports)
+        elif self.sync_type == "async":
+            return self.federated_async(reports, staleness)
+        else:
+            raise NotImplementedError
 
     # Report aggregation
     def extract_client_updates(self, reports):
@@ -431,6 +442,18 @@ class Server(object):
 
         return updates
 
+    def extract_client_weights(self, reports):
+        import fl_model  # pylint: disable=import-error
+
+        # Extract weights from reports
+        weights = [report.weights for report in reports]
+
+        return weights
+
+    def extract_global_weights(self):
+        import fl_model
+        return fl_model.extract_weights(self.model)
+
     def federated_averaging(self, reports):
         import fl_model  # pylint: disable=import-error
 
@@ -458,6 +481,55 @@ class Server(object):
             updated_weights.append((name, weight + avg_update[i]))
 
         return updated_weights
+
+    def federated_async(self, reports, staleness):
+        import fl_model  # pylint: disable=import-error
+
+        # Extract updates from reports
+        weights = self.extract_client_weights(reports)
+
+        # Extract total number of samples
+        total_samples = sum([report.num_samples for report in reports])
+
+        # Perform weighted averaging
+        new_weights = [torch.zeros(x.size())  # pylint: disable=no-member
+                      for _, x in weights[0]]
+        for i, update in enumerate(weights):
+            num_samples = reports[i].num_samples
+            for j, (_, weight) in enumerate(update):
+                # Use weighted average by number of samples
+                new_weights[j] += weight * (num_samples / total_samples)
+
+        # Extract baseline model weights - latest model
+        baseline_weights = fl_model.extract_weights(self.model)
+
+        # Calculate the staleness-aware weights
+        alpha_t = self.alpha * self.staleness(staleness)
+        logging.info('{} staleness: {} alpha_t: {}'.format(
+            self.staleness_func, staleness, alpha_t
+        ))
+
+        # Load updated weights into model
+        updated_weights = []
+        for i, (name, weight) in enumerate(baseline_weights):
+            updated_weights.append(
+                (name, (1 - alpha_t) * weight + alpha_t * new_weights[i])
+            )
+
+        return updated_weights
+
+    def staleness(self, staleness):
+        if self.staleness_func == "constant":
+            return 1
+        elif self.staleness_func == "polynomial":
+            a = 0.5
+            return pow(staleness+1, -a)
+        elif self.staleness_func == "hinge":
+            a, b = 10, 4
+            if staleness <= b:
+                return 1
+            else:
+                return 1 / (a * (staleness - b) + 1)
 
     def accuracy_averaging(self, reports):
         # Get total number of samples

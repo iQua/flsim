@@ -26,7 +26,7 @@
         "target_accuracy": 0.95,
         "task": "train",
         "epochs": 5,
-        "batch_size": 10
+        "batch_size": 100
     },
     "model": "MNIST",
     "paths": {
@@ -37,7 +37,9 @@
     "server": "basic",
     "sync": {
         "type": "async",
-        "interval": 5
+        "interval": 3,
+        "alpha": 0.9,
+        "staleness_func": "constant"
     },
     "link_speed": {
         "min": 200,

@@ -122,10 +122,10 @@ class Client(object):
         self.optimizer = fl_model.get_optimizer(self.model)
 
 
-    def run(self):
+    def run(self, reg=None):
         # Perform federated learning task
         {
-            "train": self.train()
+            "train": self.train(reg)
         }[self.task]
 
     def get_report(self):
@@ -133,7 +133,7 @@ class Client(object):
         return self.upload(self.report)
 
     # Machine learning tasks
-    def train(self):
+    def train(self, reg=None):
         import fl_model  # pylint: disable=import-error
 
         logging.info('Training on client #{}, mean delay {}s'.format(
@@ -142,7 +142,7 @@ class Client(object):
         # Perform model training
         trainloader = fl_model.get_trainloader(self.trainset, self.batch_size)
         fl_model.train(self.model, trainloader,
-                       self.optimizer, self.epochs)
+                       self.optimizer, self.epochs, reg)
 
         # Extract model weights and biases
         weights = fl_model.extract_weights(self.model)
