@@ -66,6 +66,8 @@ class Profile(object):
         fig = plt.figure()
         plt.scatter(self.loss, self.delay, s=10)
         plt.xlabel('Loss')
+        plt.xlim(left=.0)
         plt.ylabel('Delay (s)')
+        plt.ylim(bottom=.0)
         plt.savefig(figname)
         plt.close(fig)

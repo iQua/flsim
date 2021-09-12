@@ -1,6 +1,6 @@
 {
     "clients": {
-        "total": 10,
+        "total": 100,
         "per_round": 10,
         "label_distribution": "uniform",
         "do_test": false,
@@ -38,7 +38,7 @@
     "async": {
         "interval": 3,
         "alpha": 0.9,
-        "staleness_func": "constant"
+        "staleness_func": "polynomial"
     },
     "link_speed": {
         "min": 200,

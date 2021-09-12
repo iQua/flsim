@@ -277,7 +277,7 @@ class AsyncServer(Server):
                 return 1 / (a * (staleness - b) + 1)
 
     def async_save_model(self, model, path, download_time):
-        path += '/global_' + '{:.3f}'.format(download_time)
+        path += '/global_' + '{}'.format(download_time)
         torch.save(model.state_dict(), path)
         logging.info('Saved global model: {}'.format(path))
 
@@ -285,7 +285,7 @@ class AsyncServer(Server):
         for filename in os.listdir(path):
             try:
                 model_time = float(filename.split('_')[1])
-                if model_time < cur_time - 1e3:  # Allow the .3f error
+                if model_time < cur_time:
                     os.remove(os.path.join(path, filename))
                     logging.info('Remove model {}'.format(filename))
             except Exception as e:

@@ -3,7 +3,7 @@ import pickle
 import random
 from threading import Thread
 from server import Server
-from .record import Record
+from .record import Record, Profile
 
 class Group(object):
     """Basic async group."""
@@ -32,6 +32,9 @@ class SyncServer(Server):
 
         logging.info('Speed distribution: {} Kbps'.format([s for s in speed]))
 
+        # Initiate client profile of loss and delay
+        self.profile = Profile(num_clients)
+
     # Run synchronous federated learning
     def run(self):
         rounds = self.config.fl.rounds
@@ -39,7 +42,7 @@ class SyncServer(Server):
         reports_path = self.config.paths.reports
 
         # Init self accuracy records
-        self.record = Record()
+        self.records = Record()
 
         if target_accuracy:
             logging.info('Training: {} rounds or {}% accuracy\n'.format(
@@ -95,6 +98,10 @@ class SyncServer(Server):
 
         # Receive client updates
         reports = self.reporting(sample_clients)
+
+        # Update profile and plot
+        self.update_profile(reports)
+        self.profile.plot('pf_{}.png'.format(T_cur))
 
         # Perform weight aggregation
         logging.info('Aggregating updates')

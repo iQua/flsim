@@ -128,11 +128,11 @@ def train(model, trainloader, optimizer, epochs, reg=None):
                     epoch, epochs, loss.item()))
 
             # Stop training if model is already in good shape
-            if loss < loss_thres:
-                return loss
+            if loss.item() < loss_thres:
+                return loss.item()
     logging.info(
-        'loss: {} l2_loss: {}'.format(loss.item(), l2_loss))
-    return loss
+        'loss: {} l2_loss: {}'.format(loss.item(), l2_loss.item()))
+    return loss.item()
 
 
 def test(model, testloader):
