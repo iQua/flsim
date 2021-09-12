@@ -111,3 +111,6 @@ data/
 
 .idea*
 .DS_Store
+*.pkl
+*.png
+*.csv

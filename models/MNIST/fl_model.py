@@ -126,7 +126,7 @@ def train(model, trainloader, optimizer, epochs, reg=None):
             loss.backward()
             optimizer.step()
             if batch_id % log_interval == 0:
-                logging.info('Epoch: [{}/{}]\tLoss: {:.6f}'.format(
+                logging.debug('Epoch: [{}/{}]\tLoss: {:.6f}'.format(
                     epoch, epochs, loss.item()))
 
             # Stop training if model is already in good shape

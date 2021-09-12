@@ -6,3 +6,5 @@ from .kmeans import KMeansServer
 from .magavg import MagAvgServer
 # from .dqn import DQNServer # DQN server disbled
 # from .dqn import DQNTrainServer # DQN server disabled
+from .sync import SyncServer
+# from .async import AsyncServer

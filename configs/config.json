@@ -34,9 +34,8 @@
         "model": "./models",
         "reports": "reports.pkl"
     },
-    "server": "basic",
-    "sync": {
-        "type": "async",
+    "server": "sync",
+    "async": {
         "interval": 3,
         "alpha": 0.9,
         "staleness_func": "constant"

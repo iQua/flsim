@@ -4,7 +4,7 @@ import config
 import logging
 import os
 import server
-
+from datetime import datetime
 
 # Set up parser
 parser = argparse.ArgumentParser()
@@ -36,14 +36,25 @@ def main():
         "magavg": server.MagAvgServer(fl_config),
         # "dqn": server.DQNServer(fl_config), # DQN server disabled
         # "dqntrain": server.DQNTrainServer(fl_config), # DQN server disabled
+        "sync": server.SyncServer(fl_config),
     }[fl_config.server]
     fl_server.boot()
 
     # Run federated learning
     fl_server.run()
 
+    # Save and plot accuracy-time curve
+    if fl_config.server == "sync" or fl_config.server == "async":
+        d_str = datetime.now().strftime("%m-%d-%H-%M-%S")
+        fl_server.record.save_acc_record('acc_{}_{}.csv'.format(
+            fl_config.server, d_str
+        ))
+        fl_server.record.plot_acc_record('acc_{}_{}.png'.format(
+            fl_config.server, d_str
+        ))
+
     # Delete global model
-    #os.remove(fl_config.paths.model + '/global')
+    os.remove(fl_config.paths.model + '/global')
 
 
 if __name__ == "__main__":
