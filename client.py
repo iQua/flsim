@@ -57,7 +57,6 @@ class Client(object):
         else:
             self.trainset = data
 
-    # Set the speed for the link between server and client
     def set_link(self, config):
         # Set the Gaussian distribution for link speed in Kbytes
         self.speed_min = config.link.min
@@ -144,7 +143,7 @@ class Client(object):
 
         # Perform model training
         trainloader = fl_model.get_trainloader(self.trainset, self.batch_size)
-        fl_model.train(self.model, trainloader,
+        loss = fl_model.train(self.model, trainloader,
                        self.optimizer, self.epochs, reg)
 
         # Extract model weights and biases
@@ -153,6 +152,8 @@ class Client(object):
         # Generate report for server
         self.report = Report(self)
         self.report.weights = weights
+        self.report.loss = loss
+        self.report.delay = self.delay
 
         # Perform model testing if applicable
         if self.do_test:

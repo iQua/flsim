@@ -37,6 +37,7 @@ def main():
         # "dqn": server.DQNServer(fl_config), # DQN server disabled
         # "dqntrain": server.DQNTrainServer(fl_config), # DQN server disabled
         "sync": server.SyncServer(fl_config),
+        "async": server.AsyncServer(fl_config),
     }[fl_config.server]
     fl_server.boot()
 

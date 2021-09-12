@@ -15,8 +15,8 @@ class Group(object):
 
     def set_aggregate_time(self):
         """Only run after client configuration"""
-        self.aggregate_time = self.download_time + \
-            max([c.delay for c in self.clients])
+        self.delay = max([c.delay for c in self.clients])
+        self.aggregate_time = self.download_time + self.delay
 
 class SyncServer(Server):
     """Synchronous federated learning server."""
@@ -32,7 +32,7 @@ class SyncServer(Server):
 
         logging.info('Speed distribution: {} Kbps'.format([s for s in speed]))
 
-    # Run sychronous federated learning
+    # Run synchronous federated learning
     def run(self):
         rounds = self.config.fl.rounds
         target_accuracy = self.config.fl.target_accuracy
@@ -93,7 +93,7 @@ class SyncServer(Server):
         [t.join() for t in threads]
         T_cur = T_old + max_delay  # Update current time
 
-        # Recieve client updates
+        # Receive client updates
         reports = self.reporting(sample_clients)
 
         # Perform weight aggregation

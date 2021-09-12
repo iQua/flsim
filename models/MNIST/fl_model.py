@@ -119,8 +119,6 @@ def train(model, trainloader, optimizer, epochs, reg=None):
                 mse_loss = nn.MSELoss(reduction='sum')
                 l2_loss = rou/2 * mse_loss(new_weights, old_weights)
                 l2_loss = l2_loss.to(torch.float32)
-                logging.debug(
-                    'loss: {} l2_loss: {}'.format(loss.item(), l2_loss))
                 loss += l2_loss
 
             loss.backward()
@@ -131,7 +129,10 @@ def train(model, trainloader, optimizer, epochs, reg=None):
 
             # Stop training if model is already in good shape
             if loss < loss_thres:
-                return
+                return loss
+    logging.info(
+        'loss: {} l2_loss: {}'.format(loss.item(), l2_loss))
+    return loss
 
 
 def test(model, testloader):

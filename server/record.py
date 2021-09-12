@@ -3,7 +3,7 @@ import csv
 import matplotlib.pyplot as plt
 
 class Record(object):
-    """Training records."""
+    """Accuracy records."""
     def __init__(self):
         self.t = []
         self.acc = []
@@ -42,5 +42,30 @@ class Record(object):
         plt.xlabel('Time (s)')
         plt.ylabel('Accuracy (%)')
         plt.legend()
+        plt.savefig(figname)
+        plt.close(fig)
+
+class Profile(object):
+    """Clients' loss and delay profile"""
+    def __init__(self, num_clients):
+        self.loss = [-1] * num_clients
+        self.delay = [-1] * num_clients
+        self.alpha = 0.1
+
+    def update(self, client_idx, loss, delay):
+        if self.loss[client_idx] > 0:
+            # Not the first profile
+            self.loss[client_idx] = loss
+            self.delay[client_idx] = (1 - self.alpha) * self.delay[client_idx] + \
+                self.alpha * delay
+        else:
+            self.loss[client_idx] = loss
+            self.delay[client_idx] = delay
+
+    def plot(self, figname):
+        fig = plt.figure()
+        plt.scatter(self.loss, self.delay, s=10)
+        plt.xlabel('Loss')
+        plt.ylabel('Delay (s)')
         plt.savefig(figname)
         plt.close(fig)
