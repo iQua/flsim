@@ -34,7 +34,7 @@
         "model": "./models",
         "reports": "reports.pkl"
     },
-    "server": "async",
+    "server": "sync",
     "async": {
         "interval": 3,
         "alpha": 0.9,

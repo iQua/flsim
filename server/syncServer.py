@@ -127,7 +127,7 @@ class SyncServer(Server):
             accuracy = fl_model.test(self.model, testloader)
 
         logging.info('Average accuracy: {:.2f}%'.format(100 * accuracy))
-        self.record.append_acc_record(T_cur, accuracy)
+        self.records.append_acc_record(T_cur, accuracy)
         return accuracy, T_cur
 
     def selection(self):
@@ -143,3 +143,6 @@ class SyncServer(Server):
 
         return sample_groups
 
+    def update_profile(self, reports):
+        for report in reports:
+            self.profile.update(report.client_id, report.loss, report.delay)
