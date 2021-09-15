@@ -34,7 +34,7 @@
         "model": "./models",
         "reports": "reports.pkl"
     },
-    "server": "async",
+    "server": "sync",
     "async": {
         "alpha": 0.9,
         "staleness_func": "polynomial"
