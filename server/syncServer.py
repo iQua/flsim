@@ -15,8 +15,14 @@ class Group(object):
 
     def set_aggregate_time(self):
         """Only run after client configuration"""
+        assert (len(self.clients) > 0), "Empty clients in group init!"
         self.delay = max([c.delay for c in self.clients])
         self.aggregate_time = self.download_time + self.delay
+
+        # Get average throughput contributed by this group
+        assert (self.clients[0].model_size > 0), "Zero model size in group init!"
+        self.throughput = len(self.clients) * self.clients[0].model_size / \
+                self.aggregate_time
 
 class SyncServer(Server):
     """Synchronous federated learning server."""
@@ -77,13 +83,15 @@ class SyncServer(Server):
 
         # Select clients to participate in the round
         sample_groups = self.selection()
-        sample_clients = []
+        sample_clients, throughput = [], []
         for group in sample_groups:
             for client in group.clients:
                 client.set_delay()
                 sample_clients.append(client)
+                throughput.append(client.model_size / client.delay)
             group.set_download_time(T_old)
             group.set_aggregate_time()
+        self.throughput = sum([t for t in throughput])
 
         # Configure sample clients
         self.configuration(sample_clients)
@@ -127,8 +135,8 @@ class SyncServer(Server):
             accuracy = fl_model.test(self.model, testloader)
 
         logging.info('Average accuracy: {:.2f}%'.format(100 * accuracy))
-        self.records.append_acc_record(T_cur, accuracy)
-        return accuracy, T_cur
+        self.records.append_record(T_cur, accuracy, self.throughput)
+        return self.records.get_latest_acc(), self.records.get_latest_t()
 
     def selection(self):
         # Select devices to participate in round

@@ -47,10 +47,10 @@ def main():
     # Save and plot accuracy-time curve
     if fl_config.server == "sync" or fl_config.server == "async":
         d_str = datetime.now().strftime("%m-%d-%H-%M-%S")
-        fl_server.records.save_acc_record('acc_{}_{}.csv'.format(
+        fl_server.records.save_record('{}_{}.csv'.format(
             fl_config.server, d_str
         ))
-        fl_server.records.plot_acc_record('acc_{}_{}.png'.format(
+        fl_server.records.plot_record('{}_{}.png'.format(
             fl_config.server, d_str
         ))
 

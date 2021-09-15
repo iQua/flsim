@@ -18,8 +18,14 @@ class Group(object):
 
     def set_aggregate_time(self):
         """Only run after client configuration"""
+        assert (len(self.clients) > 0), "Empty clients in group init!"
         self.delay = max([c.delay for c in self.clients])
         self.aggregate_time = self.download_time + self.delay
+
+        # Get average throughput contributed by this group
+        assert (self.clients[0].model_size > 0), "Zero model size in group init!"
+        self.throughput = len(self.clients) * self.clients[0].model_size / \
+                self.aggregate_time
 
 
 class AsyncServer(Server):
@@ -63,7 +69,6 @@ class AsyncServer(Server):
         reports_path = self.config.paths.reports
 
         # Init async parameters
-        self.T_async = self.config.sync.interval
         self.alpha = self.config.sync.alpha
         self.staleness_func = self.config.sync.staleness_func
 
@@ -113,15 +118,20 @@ class AsyncServer(Server):
                 sample_clients.append(client)
             group.set_download_time(T_old)
             group.set_aggregate_time()
+        self.throughput = sum([g.throughput for g in sample_groups])
 
         # Put the group into a queue according to its delay in ascending order
         # Each selected client will complete one local update in this async round
         queue = PriorityQueue()
-        last_aggregate_time = self.T_async  # This async round will end after
-                                            # last aggregation
+        # This async round will end after the slowest group completes one round
+        last_aggregate_time = max([g.aggregate_time for g in sample_groups])
+
         for group in sample_groups:
             queue.put((group.aggregate_time, group))
-            last_aggregate_time = max(last_aggregate_time, group.aggregate_time)
+
+        logging.info('Round lasts {} secs, avg throughput {} kB/s'.format(
+            last_aggregate_time, self.throughput
+        ))
 
         # Start the asynchronous updates
         while not queue.empty():
@@ -169,9 +179,10 @@ class AsyncServer(Server):
                 accuracy = fl_model.test(self.model, testloader)
 
             logging.info('Average accuracy: {:.2f}%\n'.format(100 * accuracy))
-            self.records.append_acc_record(T_cur, accuracy)
+            self.records.append_record(T_cur, accuracy, self.throughput)
             # Return when target accuracy is met
-            if target_accuracy and (accuracy >= target_accuracy):
+            if target_accuracy and \
+                    (self.records.get_latest_acc() >= target_accuracy):
                 logging.info('Target accuracy reached.')
                 return self.records.get_latest_acc(), self.records.get_latest_t()
 

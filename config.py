@@ -66,8 +66,8 @@ class Config(object):
         self.server = config['server']
 
         # -- Async --
-        fields = ['interval', 'alpha', 'staleness_func']
-        defaults = (60, 0.9, 'constant')
+        fields = ['alpha', 'staleness_func']
+        defaults = (0.9, 'constant')
         params = [config['async'].get(field, defaults[i])
                   for i, field in enumerate(fields)]
         self.sync = namedtuple('sync', fields)(*params)
