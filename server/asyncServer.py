@@ -8,6 +8,7 @@ import os
 from server import Server
 from .record import Record, Profile
 
+
 class Group(object):
     """Basic async group."""
     def __init__(self, client_list):
@@ -26,6 +27,24 @@ class Group(object):
         assert (self.clients[0].model_size > 0), "Zero model size in group init!"
         self.throughput = len(self.clients) * self.clients[0].model_size / \
                 self.aggregate_time
+
+    def __eq__(self, other):
+        return self.aggregate_time == other.aggregate_time
+
+    def __ne__(self, other):
+        return self.aggregate_time != other.aggregate_time
+
+    def __lt__(self, other):
+        return self.aggregate_time < other.aggregate_time
+
+    def __le__(self, other):
+        return self.aggregate_time <= other.aggregate_time
+
+    def __gt__(self, other):
+        return self.aggregate_time > other.aggregate_time
+
+    def __ge__(self, other):
+        return self.aggregate_time >= other.aggregate_time
 
 
 class AsyncServer(Server):
@@ -126,16 +145,16 @@ class AsyncServer(Server):
         # This async round will end after the slowest group completes one round
         last_aggregate_time = max([g.aggregate_time for g in sample_groups])
 
-        for group in sample_groups:
-            queue.put((group.aggregate_time, group))
-
         logging.info('Round lasts {} secs, avg throughput {} kB/s'.format(
             last_aggregate_time, self.throughput
         ))
 
+        for group in sample_groups:
+            queue.put(group)
+
         # Start the asynchronous updates
         while not queue.empty():
-            select_group = queue.get()[1]
+            select_group = queue.get()
             select_clients = select_group.clients
             self.async_configuration(select_clients, select_group.download_time)
 
@@ -191,7 +210,7 @@ class AsyncServer(Server):
             if T_cur + select_group.delay < last_aggregate_time:
                 select_group.set_download_time(T_cur)
                 select_group.set_aggregate_time()
-                queue.put((select_group.aggregate_time, select_group))
+                queue.put(select_group)
 
         return self.records.get_latest_acc(), self.records.get_latest_t()
 

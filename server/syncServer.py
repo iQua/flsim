@@ -93,6 +93,8 @@ class SyncServer(Server):
             group.set_aggregate_time()
         self.throughput = sum([t for t in throughput])
 
+        logging.info('Avg throughput {} kB/s'.format(self.throughput))
+
         # Configure sample clients
         self.configuration(sample_clients)
         # Use the max delay in all sample clients as the delay in sync round
