@@ -148,8 +148,8 @@ class SyncServer(Server):
         sample_clients = [client for client in random.sample(
             self.clients, clients_per_round)]
 
-        # Grouping strategies to be updated
-        sample_groups = [Group([client]) for client in sample_clients]
+        # In sync case, create one group of all selected clients
+        sample_groups = Group([client for client in sample_clients])
 
         return sample_groups
 

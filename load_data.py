@@ -108,7 +108,7 @@ class BiasLoader(Loader):
         len_minor_labels = len(self.labels) - 1
 
         if secondary:
-                # Distribute to random secondary label
+            # Distribute to random secondary label
             dist = [0] * len_minor_labels
             dist[random.randint(0, len_minor_labels - 1)] = minority
         else:

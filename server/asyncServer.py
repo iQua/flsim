@@ -26,7 +26,7 @@ class Group(object):
         # Get average throughput contributed by this group
         assert (self.clients[0].model_size > 0), "Zero model size in group init!"
         self.throughput = len(self.clients) * self.clients[0].model_size / \
-                self.aggregate_time
+                self.delay
 
     def __eq__(self, other):
         return self.aggregate_time == other.aggregate_time
@@ -218,12 +218,38 @@ class AsyncServer(Server):
     def selection(self):
         # Select devices to participate in round
         clients_per_round = self.config.clients.per_round
+        select_type = self.config.clients.selection
 
-        # Select clients randomly
-        sample_clients = [client for client in random.sample(
-            self.clients, clients_per_round)]
+        if select_type == 'random':
+            # Select clients randomly
+            sample_clients = [client for client in random.sample(
+                self.clients, clients_per_round)]
 
-        # Grouping strategies to be updated
+        elif select_type == 'short_latency_first':
+            # Select the clients with short latencies and random loss
+            sample_clients = sorted(self.clients, key=lambda c:c.est_delay)
+            sample_clients = sample_clients[:clients_per_round]
+            print(sample_clients)
+
+        elif select_type == 'short_latency_high_loss_first':
+            # Get the non-negative losses and delays
+            losses = [c.loss for c in self.clients]
+            losses_norm = [l/max(losses) for l in losses]
+            delays = [c.est_delay for c in self.clients]
+            delays_norm = [d/max(losses) for d in delays]
+
+            # Sort the clients by jointly consider latency and loss
+            gamma = 0.2
+            sorted_idx = sorted(range(len(self.clients)),
+                                key=lambda i: losses_norm[i] - gamma * delays_norm[i],
+                                reverse=True)
+            print([losses[i] for i in sorted_idx])
+            print([delays[i] for i in sorted_idx])
+            sample_clients = [self.clients[i] for i in sorted_idx]
+            sample_clients = sample_clients[:clients_per_round]
+            print(sample_clients)
+
+        # Create one group for each selected client to perform async updates
         sample_groups = [Group([client]) for client in sample_clients]
 
         return sample_groups

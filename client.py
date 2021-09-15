@@ -11,6 +11,8 @@ class Client(object):
 
     def __init__(self, client_id):
         self.client_id = client_id
+        self.loss = 10.0  # Set a big number for init loss
+                          # to first select clients that haven't been selected
 
     def __repr__(self):
         #return 'Client #{}: {} samples in labels: {}'.format(
@@ -63,12 +65,16 @@ class Client(object):
         self.speed_max = config.link.max
         self.speed_mean = random.uniform(self.speed_min, self.speed_max)
         self.speed_std = config.link.std
+
         # Set model size
         model_path = config.paths.model + '/global'
         if os.path.exists(model_path):
             self.model_size = os.path.getsize(model_path) / 1e3  # model size in Kbytes
         else:
             self.model_size = 1600  # estimated model size in Kbytes
+
+        # Set estimated delay
+        self.est_delay = self.model_size / self.speed_mean
 
     def set_delay(self):
         # Set the link speed and delay for the upcoming run
@@ -143,7 +149,7 @@ class Client(object):
 
         # Perform model training
         trainloader = fl_model.get_trainloader(self.trainset, self.batch_size)
-        loss = fl_model.train(self.model, trainloader,
+        self.loss = fl_model.train(self.model, trainloader,
                        self.optimizer, self.epochs, reg)
 
         # Extract model weights and biases
@@ -152,7 +158,7 @@ class Client(object):
         # Generate report for server
         self.report = Report(self)
         self.report.weights = weights
-        self.report.loss = loss
+        self.report.loss = self.loss
         self.report.delay = self.delay
 
         # Perform model testing if applicable

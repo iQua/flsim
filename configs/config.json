@@ -2,9 +2,10 @@
     "clients": {
         "total": 100,
         "per_round": 10,
-        "label_distribution": "uniform",
+        "label_distribution": "normal",
         "do_test": false,
-        "test_partition": 0.2
+        "test_partition": 0.2,
+        "selection": "random"
     },
     "data": {
         "loading": "dynamic",
@@ -22,7 +23,7 @@
         }
     },
     "federated_learning": {
-        "rounds": 2,
+        "rounds": 100,
         "target_accuracy": 0.95,
         "task": "train",
         "epochs": 5,
