@@ -4,7 +4,8 @@
         "per_round": 10,
         "label_distribution": "uniform",
         "do_test": false,
-        "test_partition": 0.2
+        "test_partition": 0.2,
+        "selection": "random"
     },
     "data": {
         "loading": "dynamic",
