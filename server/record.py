@@ -39,7 +39,7 @@ class Record(object):
 
         t = np.expand_dims(np.array(self.t), axis=1)
         acc = np.expand_dims(np.array(self.acc), axis=1)
-        throughput = np.expand_dims(np.array(self.acc), axis=1)
+        throughput = np.expand_dims(np.array(self.throughput), axis=1)
         rows = np.concatenate((t, acc, throughput), axis=1).tolist()
 
         fields = ['time', 'acc', 'throughput']
