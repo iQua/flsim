@@ -24,6 +24,24 @@ class Group(object):
         self.throughput = len(self.clients) * self.clients[0].model_size / \
                 self.aggregate_time
 
+    def __eq__(self, other):
+        return self.aggregate_time == other.aggregate_time
+
+    def __ne__(self, other):
+        return self.aggregate_time != other.aggregate_time
+
+    def __lt__(self, other):
+        return self.aggregate_time < other.aggregate_time
+
+    def __le__(self, other):
+        return self.aggregate_time <= other.aggregate_time
+
+    def __gt__(self, other):
+        return self.aggregate_time > other.aggregate_time
+
+    def __ge__(self, other):
+        return self.aggregate_time >= other.aggregate_time
+
 class SyncServer(Server):
     """Synchronous federated learning server."""
 
@@ -149,7 +167,7 @@ class SyncServer(Server):
             self.clients, clients_per_round)]
 
         # In sync case, create one group of all selected clients
-        sample_groups = Group([client for client in sample_clients])
+        sample_groups = [Group([client for client in sample_clients])]
 
         return sample_groups
 
