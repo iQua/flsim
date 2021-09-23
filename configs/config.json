@@ -5,7 +5,7 @@
         "label_distribution": "normal",
         "do_test": false,
         "test_partition": 0.2,
-        "selection": "random"
+        "selection": "short_latency_high_loss_first"
     },
     "data": {
         "loading": "dynamic",
