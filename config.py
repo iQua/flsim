@@ -53,8 +53,8 @@ class Config(object):
         self.model = config['model']
 
         # -- Paths --
-        fields = ['data', 'model', 'reports']
-        defaults = ('./data', './models', None)
+        fields = ['data', 'model', 'reports', 'plot']
+        defaults = ('./data', './models', None, './plots')
         params = [config['paths'].get(field, defaults[i])
                   for i, field in enumerate(fields)]
         # Set specific model path
@@ -78,3 +78,6 @@ class Config(object):
         params = [config['link_speed'].get(field, defaults[i])
                   for i, field in enumerate(fields)]
         self.link = namedtuple('link_speed', fields)(*params)
+
+        # -- Plot interval --
+        self.plot_interval = config['plot_interval']

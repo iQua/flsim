@@ -1,6 +1,8 @@
 import numpy as np
 import csv
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
 class Record(object):
     """Accuracy records."""
@@ -74,23 +76,48 @@ class Profile(object):
         self.loss = [-1] * num_clients
         self.delay = [-1] * num_clients
         self.alpha = 0.1
+        self.weights = [[]] * num_clients
 
-    def update(self, client_idx, loss, delay):
+    def update(self, client_idx, loss, delay, flatten_weights):
         if self.loss[client_idx] > 0:
             # Not the first profile
-            self.loss[client_idx] = loss
             self.delay[client_idx] = (1 - self.alpha) * self.delay[client_idx] + \
                 self.alpha * delay
         else:
-            self.loss[client_idx] = loss
             self.delay[client_idx] = delay
+        self.loss[client_idx] = loss
+        self.weights[client_idx] = flatten_weights
 
-    def plot(self, figname):
+    def plot(self, T, path):
+        """
+        Plot the up-to-date profiles, including loss-delay distribution,
+        and 2D PCA plots of weights
+        Args:
+            T: current time in secs
+        """
         fig = plt.figure()
         plt.scatter(self.loss, self.delay, s=10)
         plt.xlabel('Loss')
         plt.xlim(left=.0)
         plt.ylabel('Delay (s)')
         plt.ylim(bottom=.0)
-        plt.savefig(figname)
+        plt.savefig(path + '/ld_{}.png'.format(T))
         plt.close(fig)
+
+        w_array = []
+        for w in self.weights:
+            if len(w) > 0:  # weight is not empty
+                w_array.append(w)
+        w_array = np.array(w_array)
+        w_array = StandardScaler().fit_transform(w_array)
+
+        pca = PCA(n_components=2)
+        pc = pca.fit_transform(w_array)
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.scatter(x=pc[:, 0], y=pc[:, 1], alpha=0.8, s=20)
+        ax.set_title('PCA transform of weights profile')
+        plt.savefig(path + '/pca_{}.png'.format(T))
+        plt.close(fig)
+

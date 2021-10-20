@@ -1,6 +1,7 @@
 import logging
 import pickle
 import random
+import math
 from threading import Thread
 from server import Server
 from .record import Record, Profile
@@ -129,7 +130,9 @@ class SyncServer(Server):
 
         # Update profile and plot
         self.update_profile(reports)
-        self.profile.plot('pf_{}.png'.format(T_cur))
+        if math.floor(T_cur / self.config.plot_interval) > \
+                math.floor(T_old / self.config.plot_interval):
+            self.profile.plot(T_cur, self.config.paths.plot)
 
         # Perform weight aggregation
         logging.info('Aggregating updates')
@@ -173,4 +176,5 @@ class SyncServer(Server):
 
     def update_profile(self, reports):
         for report in reports:
-            self.profile.update(report.client_id, report.loss, report.delay)
+            self.profile.update(report.client_id, report.loss, report.delay,
+                                self.flatten_weights(report.weights))

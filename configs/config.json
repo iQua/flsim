@@ -1,8 +1,8 @@
 {
     "clients": {
-        "total": 100,
-        "per_round": 10,
-        "label_distribution": "normal",
+        "total": 50,
+        "per_round": 50,
+        "label_distribution": "uniform",
         "do_test": false,
         "test_partition": 0.2,
         "selection": "short_latency_high_loss_first"
@@ -18,7 +18,7 @@
         },
         "IID": false,
         "bias": {
-            "primary": 0.8,
+            "primary": 1.0,
             "secondary": false
         }
     },
@@ -33,16 +33,18 @@
     "paths": {
         "data": "./data",
         "model": "./models",
-        "reports": "reports.pkl"
+        "reports": "reports.pkl",
+        "plot": "./plots"
     },
-    "server": "async",
+    "server": "sync",
     "async": {
         "alpha": 0.9,
         "staleness_func": "polynomial"
     },
     "link_speed": {
-        "min": 200,
+        "min": 5000,
         "max": 5000,
-        "std": 100
-    }
+        "std": 0
+    },
+    "plot_interval": 1
 }
