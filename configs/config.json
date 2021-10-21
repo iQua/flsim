@@ -18,7 +18,7 @@
         },
         "IID": false,
         "bias": {
-            "primary": 1.0,
+            "primary": 0.8,
             "secondary": false
         }
     },

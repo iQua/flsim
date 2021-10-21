@@ -81,6 +81,7 @@ class AsyncServer(Server):
 
         # Initiate client profile of loss and delay
         self.profile = Profile(num_clients)
+        self.profile.set_primary_label([client.pref for client in self.clients])
 
     # Run asynchronous federated learning
     def run(self):
@@ -172,6 +173,7 @@ class AsyncServer(Server):
 
             # Update profile and plot
             self.update_profile(reports)
+            # Plot every plot_interval
             if math.floor(T_cur / self.config.plot_interval) > \
                     math.floor(T_old / self.config.plot_interval):
                 self.profile.plot(T_cur, self.config.paths.plot)
