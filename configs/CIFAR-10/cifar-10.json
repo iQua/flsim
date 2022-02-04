@@ -6,21 +6,31 @@
     "data": {
         "loading": "static",
         "partition": {
-            "size": 600
+            "size": 1000
         },
         "IID": true
     },
     "federated_learning": {
         "rounds": 10000,
-        "target_accuracy": 0.99,
+        "target_accuracy": 0.7,
         "task": "train",
-        "epochs": 5,
-        "batch_size": 10
+        "epochs": 10,
+        "batch_size": 100
     },
     "model": "CIFAR-10",
     "paths": {
         "data": "./data",
         "model": "./models"
     },
-    "server": "basic"
+    "server": "sync",
+    "async": {
+        "alpha": 0.9,
+        "staleness_func": "polynomial"
+    },
+    "link_speed": {
+        "min": 5000,
+        "max": 5000,
+        "std": 0
+    },
+    "plot_interval": 1000
 }

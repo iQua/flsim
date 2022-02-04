@@ -5,11 +5,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
+import numpy as np
 
 # Training settings
-lr = 0.01
+lr = 0.001
 momentum = 0.9
 log_interval = 10
+rou = 1
+loss_thres = 0.01
 
 # Cuda settings
 use_cuda = torch.cuda.is_available()
@@ -84,15 +87,30 @@ def load_weights(model, weights):
     model.load_state_dict(updated_state_dict, strict=False)
 
 
-def train(model, trainloader, optimizer, epochs):
+def flatten_weights(weights):
+    # Flatten weights into vectors
+    weight_vecs = []
+    for _, weight in weights:
+        weight_vecs.extend(weight.flatten().tolist())
+
+    return np.array(weight_vecs)
+
+
+def train(model, trainloader, optimizer, epochs, reg=None):
     model.to(device)
     model.train()
     criterion = nn.CrossEntropyLoss()
+
+    # Get the snapshot of weights when training starts, if regularization is on
+    if reg is not None:
+        old_weights = flatten_weights(extract_weights(model))
+        old_weights = torch.from_numpy(old_weights)
 
     for epoch in range(1, epochs + 1):
         for batch_id, data in enumerate(trainloader):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
+            print(inputs.shape, labels.shape)
             inputs, labels = inputs.to(device), labels.to(device)
 
             # zero the parameter gradients
@@ -101,12 +119,34 @@ def train(model, trainloader, optimizer, epochs):
             # forward + backward + optimize
             outputs = model(inputs)
             loss = criterion(outputs, labels)
+
+            # Add regularization
+            if reg is not None:
+                new_weights = flatten_weights(extract_weights(model))
+                new_weights = torch.from_numpy(new_weights)
+                mse_loss = nn.MSELoss(reduction='sum')
+                l2_loss = rou / 2 * mse_loss(new_weights, old_weights)
+                l2_loss = l2_loss.to(torch.float32)
+                loss += l2_loss
+
             loss.backward()
             optimizer.step()
 
             if batch_id % log_interval == 0:
                 logging.debug('Epoch: [{}/{}]\tLoss: {:.6f}'.format(
                     epoch, epochs, loss.item()))
+
+            # Stop training if model is already in good shape
+            #if loss.item() < loss_thres:
+            #    return loss.item()
+
+    if reg is not None:
+        logging.info(
+            'loss: {} l2_loss: {}'.format(loss.item(), l2_loss.item()))
+    else:
+        logging.info(
+            'loss: {}'.format(loss.item()))
+    return loss.item()
 
 
 def test(model, testloader):

@@ -59,7 +59,8 @@ class SyncServer(Server):
 
         # Initiate client profile of loss and delay
         self.profile = Profile(num_clients)
-        self.profile.set_primary_label([client.pref for client in self.clients])
+        if not self.config.data.IID:
+            self.profile.set_primary_label([client.pref for client in self.clients])
 
     # Run synchronous federated learning
     def run(self):
