@@ -49,7 +49,7 @@ class Generator(load_data.Generator):
         CIFAR_STD = [0.2023, 0.1994, 0.2010]
 
         train_transform = transforms.Compose([
-            transforms.ToPILImage(),
+            #transforms.ToPILImage(),
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
@@ -63,16 +63,8 @@ class Generator(load_data.Generator):
             transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
         ])
 
-        self.trainset = datasets.CIFAR10(
-            path, train=True, download=True, transform=transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-            ]))
-        self.testset = datasets.CIFAR10(
-            path, train=False, transform=transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-            ]))
+        self.trainset = datasets.CIFAR10(path, train=True, download=True, transform=train_transform)
+        self.testset = datasets.CIFAR10(path, train=False, download=True, transform=valid_transform)
         self.labels = list(self.trainset.classes)
 
 
@@ -148,7 +140,6 @@ def train(model, trainloader, optimizer, epochs, reg=None):
         for batch_id, data in enumerate(trainloader):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
-            print(inputs.shape, labels.shape)
             inputs, labels = inputs.to(device), labels.to(device)
 
             # zero the parameter gradients
