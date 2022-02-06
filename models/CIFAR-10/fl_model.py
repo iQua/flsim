@@ -8,7 +8,7 @@ from torchvision import datasets, transforms
 import numpy as np
 
 # Training settings
-lr = 0.001
+lr = 0.01
 momentum = 0.9
 log_interval = 10
 rou = 1
@@ -19,12 +19,50 @@ use_cuda = torch.cuda.is_available()
 device = torch.device(  # pylint: disable=no-member
     'cuda' if use_cuda else 'cpu')
 
+class Cutout(object):
+    def __init__(self, length):
+        self.length = length
+
+    def __call__(self, img):
+        h, w = img.size(1), img.size(2)
+        mask = np.ones((h, w), np.float32)
+        y = np.random.randint(h)
+        x = np.random.randint(w)
+
+        y1 = np.clip(y - self.length // 2, 0, h)
+        y2 = np.clip(y + self.length // 2, 0, h)
+        x1 = np.clip(x - self.length // 2, 0, w)
+        x2 = np.clip(x + self.length // 2, 0, w)
+
+        mask[y1: y2, x1: x2] = 0.
+        mask = torch.from_numpy(mask)
+        mask = mask.expand_as(img)
+        img *= mask
+        return img
 
 class Generator(load_data.Generator):
     """Generator for CIFAR-10 dataset."""
 
     # Extract CIFAR-10 data using torchvision datasets
     def read(self, path):
+        CIFAR_MEAN = [0.49139968, 0.48215827, 0.44653124]
+        CIFAR_STD = [0.24703233, 0.24348505, 0.26158768]
+
+        train_transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
+        ])
+
+        train_transform.transforms.append(Cutout(16))
+
+        valid_transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
+        ])
+
         self.trainset = datasets.CIFAR10(
             path, train=True, download=True, transform=transforms.Compose([
                 transforms.ToTensor(),
