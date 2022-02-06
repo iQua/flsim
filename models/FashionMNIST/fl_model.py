@@ -26,13 +26,13 @@ class Generator(load_data.Generator):
             path, train=True, download=True, transform=transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize(
-                    (0.1307,), (0.3081,))
+                    (0.5026,), (0.9873,))
             ]))
         self.testset = datasets.FashionMNIST(
             path, train=False, transform=transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize(
-                    (0.1307,), (0.3081,))
+                    (0.5026,), (0.9873,))
             ]))
         self.labels = list(self.trainset.classes)
 

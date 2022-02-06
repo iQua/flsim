@@ -45,8 +45,8 @@ class Generator(load_data.Generator):
 
     # Extract CIFAR-10 data using torchvision datasets
     def read(self, path):
-        CIFAR_MEAN = [0.49139968, 0.48215827, 0.44653124]
-        CIFAR_STD = [0.24703233, 0.24348505, 0.26158768]
+        CIFAR_MEAN = [0.4914, 0.4822, 0.4465]
+        CIFAR_STD = [0.2023, 0.1994, 0.2010]
 
         train_transform = transforms.Compose([
             transforms.ToPILImage(),
