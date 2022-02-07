@@ -1,7 +1,9 @@
 {
     "clients": {
-        "total": 100,
-        "per_round": 10
+        "total": 5,
+        "per_round": 5,
+        "label_distribution": "uniform",
+        "do_test": false
     },
     "data": {
         "loading": "static",
@@ -11,10 +13,10 @@
         "IID": true
     },
     "federated_learning": {
-        "rounds": 10000,
+        "rounds": 20,
         "target_accuracy": 0.7,
         "task": "train",
-        "epochs": 10,
+        "epochs": 5,
         "batch_size": 100
     },
     "model": "CIFAR-10",

@@ -10,10 +10,10 @@ import time
 
 # Training settings
 lr = 0.01
-momentum = 0.5
+momentum = 0.9
 log_interval = 10
 rou = 1
-loss_thres = 0.01
+loss_thres = 0.001
 
 # Cuda settings
 use_cuda = torch.cuda.is_available()
@@ -99,6 +99,7 @@ def flatten_weights(weights):
 def train(model, trainloader, optimizer, epochs, reg=None):
     model.to(device)
     model.train()
+    criterion = nn.CrossEntropyLoss().to(device)
 
     # Get the snapshot of weights when training starts, if regularization is on
     if reg is not None:
@@ -110,7 +111,7 @@ def train(model, trainloader, optimizer, epochs, reg=None):
             image, label = image.to(device), label.to(device)
             optimizer.zero_grad()
             output = model(image)
-            loss = F.nll_loss(output, label)
+            loss = criterion(output, label)
 
             # Add regularization
             if reg is not None:

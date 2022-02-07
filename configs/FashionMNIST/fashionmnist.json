@@ -1,7 +1,9 @@
 {
     "clients": {
-        "total": 100,
-        "per_round": 10
+        "total": 5,
+        "per_round": 5,
+        "label_distribution": "uniform",
+        "do_test": false
     },
     "data": {
         "loading": "static",
@@ -11,16 +13,26 @@
         "IID": true
     },
     "federated_learning": {
-        "rounds": 10000,
-        "target_accuracy": 0.99,
+        "rounds": 20,
+        "target_accuracy": 0.85,
         "task": "train",
-        "epochs": 5,
-        "batch_size": 10
+        "epochs": 20,
+        "batch_size": 100
     },
     "model": "FashionMNIST",
     "paths": {
         "data": "./data",
         "model": "./models"
     },
-    "server": "basic"
+    "server": "sync",
+    "async": {
+        "alpha": 0.9,
+        "staleness_func": "polynomial"
+    },
+    "link_speed": {
+        "min": 5000,
+        "max": 5000,
+        "std": 0
+    },
+    "plot_interval": 1000
 }

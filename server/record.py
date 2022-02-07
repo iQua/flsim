@@ -16,11 +16,12 @@ class Record(object):
     def append_record(self, t, acc, throughput):
         self.t.append(t)
         self.throughput.append(throughput)
-        if len(self.acc) == 0:
-            self.acc.append(acc)
-        else:
-            self.acc.append((1 - self.alpha) * self.last_acc + \
-                            self.alpha * acc)
+        self.acc.append(acc)
+        #if len(self.acc) == 0:
+        #    self.acc.append(acc)
+        #else:
+        #    self.acc.append((1 - self.alpha) * self.last_acc + \
+        #                    self.alpha * acc)
         self.last_acc = self.acc[-1]
 
     def get_latest_t(self):

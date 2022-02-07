@@ -12,7 +12,7 @@ lr = 0.01
 momentum = 0.9
 log_interval = 10
 rou = 1
-loss_thres = 0.01
+loss_thres = 0.0001
 
 # Cuda settings
 use_cuda = torch.cuda.is_available()
@@ -129,7 +129,7 @@ def flatten_weights(weights):
 def train(model, trainloader, optimizer, epochs, reg=None):
     model.to(device)
     model.train()
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss().to(device)
 
     # Get the snapshot of weights when training starts, if regularization is on
     if reg is not None:
@@ -166,8 +166,8 @@ def train(model, trainloader, optimizer, epochs, reg=None):
                     epoch, epochs, loss.item()))
 
             # Stop training if model is already in good shape
-            #if loss.item() < loss_thres:
-            #    return loss.item()
+            if loss.item() < loss_thres:
+                return loss.item()
 
     if reg is not None:
         logging.info(
