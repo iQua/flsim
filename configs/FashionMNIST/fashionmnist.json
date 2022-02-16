@@ -1,7 +1,7 @@
 {
     "clients": {
-        "total": 5,
-        "per_round": 5,
+        "total": 6,
+        "per_round": 6,
         "label_distribution": "uniform",
         "do_test": false
     },
@@ -16,7 +16,7 @@
         "rounds": 20,
         "target_accuracy": 0.85,
         "task": "train",
-        "epochs": 20,
+        "epochs": 5,
         "batch_size": 100
     },
     "model": "FashionMNIST",

@@ -267,8 +267,8 @@ class Server(object):
                 assert name == bl_name
 
                 # Calculate update
-                delta = weight - baseline
-                update.append((name, delta))
+                #delta = weight - baseline
+                update.append((name, weight))
             updates.append(update)
 
         return updates
@@ -287,9 +287,9 @@ class Server(object):
                       for _, x in updates[0]]
         for i, update in enumerate(updates):
             num_samples = reports[i].num_samples
-            for j, (_, delta) in enumerate(update):
+            for j, (_, weight) in enumerate(update):
                 # Use weighted average by number of samples
-                avg_update[j] += delta * (num_samples / total_samples)
+                avg_update[j] += weight * (num_samples / total_samples)
 
         # Extract baseline model weights
         baseline_weights = fl_model.extract_weights(self.model)
@@ -297,7 +297,7 @@ class Server(object):
         # Load updated weights into model
         updated_weights = []
         for i, (name, weight) in enumerate(baseline_weights):
-            updated_weights.append((name, weight + avg_update[i]))
+            updated_weights.append((name, avg_update[i]))
 
         return updated_weights
 

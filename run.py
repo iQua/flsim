@@ -5,6 +5,9 @@ import os
 import server
 from datetime import datetime
 import time
+import random
+import numpy as np
+import torch
 
 # Set up parser
 parser = argparse.ArgumentParser()
@@ -22,6 +25,10 @@ logging.basicConfig(
 
 def main():
     """Run a federated learning simulation."""
+    # Set random seed
+    random.seed(0)
+    np.random.seed(0)
+    torch.manual_seed(10)
 
     # Read configuration file
     fl_config = config.Config(args.config)
