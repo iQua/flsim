@@ -73,22 +73,24 @@ class Record(object):
 
 class Profile(object):
     """Clients' loss and delay profile"""
-    def __init__(self, num_clients):
+    def __init__(self, num_clients, labels):
         self.loss = np.repeat(-1., num_clients)
         self.delay = np.repeat(-1., num_clients)
         self.primary_label = np.repeat(-1., num_clients)
         self.alpha = 0.1
         self.weights = [[]] * num_clients
+        self.grads = [[]] * num_clients
+        self.labels = labels
 
     def set_primary_label(self, pref_str):
         """
         Note, pref is a list of string labels like '3 - three'
         We need to convert the list of string labels to integers
         """
-        pref_int = [int(s.split('-')[0].strip()) for s in pref_str]
+        pref_int = [int(self.labels.index(s)) for s in pref_str]
         self.primary_label = np.array(pref_int)
 
-    def update(self, client_idx, loss, delay, flatten_weights):
+    def update(self, client_idx, loss, delay, flatten_weights, flatten_grads):
         if self.loss[client_idx] > 0:
             # Not the first profile
             self.delay[client_idx] = (1 - self.alpha) * self.delay[client_idx] + \
@@ -97,11 +99,12 @@ class Profile(object):
             self.delay[client_idx] = delay
         self.loss[client_idx] = loss
         self.weights[client_idx] = flatten_weights
+        self.grads[client_idx] = flatten_grads
 
     def plot(self, T, path):
         """
         Plot the up-to-date profiles, including loss-delay distribution,
-        and 2D PCA plots of weights
+        and 2D PCA plots of normalized weights and grads
         Args:
             T: current time in secs
         """
@@ -110,6 +113,7 @@ class Profile(object):
             RGB color; the keyword argument name must be a standard mpl colormap name.'''
             return plt.cm.get_cmap(name, n + 1)
 
+        # Plot the loss-delay distribution
         fig = plt.figure()
         cmap = get_cmap(len(set(self.primary_label.tolist())))
         color_ind = 0
@@ -126,6 +130,7 @@ class Profile(object):
         plt.savefig(path + '/ld_{}.png'.format(T))
         plt.close(fig)
 
+        # Plot the PCA of weights
         w_array, l_list = [], []
         for i in range(len(self.weights)):
             if len(self.weights[i]) > 0:  # weight is not empty
@@ -147,6 +152,31 @@ class Profile(object):
             color_ind += 1
         plt.legend()
         plt.title('PCA transform of weights profile')
-        plt.savefig(path + '/pca_{}.png'.format(T))
+        plt.savefig(path + '/weight_pca_{}.png'.format(T))
+        plt.close(fig)
+
+        # Plot the PCA of grads
+        g_array, l_list = [], []
+        for i in range(len(self.grads)):
+            if len(self.grads[i]) > 0:  # grad is not empty
+                g_array.append(self.grads[i])
+                l_list.append(self.primary_label[i])
+        g_array, l_array = np.array(g_array), np.array(l_list)
+        g_array = StandardScaler().fit_transform(g_array)
+
+        pca = PCA(n_components=2)
+        pc = pca.fit_transform(g_array)
+
+        fig = plt.figure()
+        cmap = get_cmap(len(list(set(l_list))))
+        color_ind = 0
+        for l in set(l_list):
+            mask = (l_array == l)
+            plt.scatter(x=pc[mask, 0], y=pc[mask, 1], alpha=0.8, s=20,
+                        color=cmap(color_ind), label=str(l))
+            color_ind += 1
+        plt.legend()
+        plt.title('PCA transform of weights profile')
+        plt.savefig(path + '/grad_pca_{}.png'.format(T))
         plt.close(fig)
 

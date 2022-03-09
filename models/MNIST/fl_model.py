@@ -96,6 +96,16 @@ def flatten_weights(weights):
 
     return np.array(weight_vecs)
 
+
+def extract_grads(model):
+    grads = []
+    for name, weight in model.to(torch.device('cpu')).named_parameters():  # pylint: disable=no-member
+        if weight.requires_grad:
+            grads.append((name, weight.grad))
+
+    return grads
+
+
 def train(model, trainloader, optimizer, epochs, reg=None):
     model.to(device)
     model.train()

@@ -154,10 +154,12 @@ class Client(object):
 
         # Extract model weights and biases
         weights = fl_model.extract_weights(self.model)
+        grads = fl_model.extract_grads(self.model)
 
         # Generate report for server
         self.report = Report(self)
         self.report.weights = weights
+        self.report.grads = grads
         self.report.loss = self.loss
         self.report.delay = self.delay
 

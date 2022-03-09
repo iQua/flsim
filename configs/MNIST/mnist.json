@@ -1,7 +1,7 @@
 {
     "clients": {
-        "total": 5,
-        "per_round": 5,
+        "total": 50,
+        "per_round": 50,
         "label_distribution": "uniform",
         "do_test": false
     },
@@ -10,7 +10,11 @@
         "partition": {
             "size": 600
         },
-        "IID": true
+        "IID": false,
+        "bias": {
+            "primary": 0.8,
+            "secondary": false
+        }
     },
     "federated_learning": {
         "rounds": 20,
@@ -30,9 +34,9 @@
         "staleness_func": "polynomial"
     },
     "link_speed": {
-        "min": 5000,
-        "max": 5000,
+        "min": 2000,
+        "max": 2000,
         "std": 0
     },
-    "plot_interval": 1000
+    "plot_interval": 2
 }

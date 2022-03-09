@@ -58,7 +58,7 @@ class SyncServer(Server):
         logging.info('Speed distribution: {} Kbps'.format([s for s in speed]))
 
         # Initiate client profile of loss and delay
-        self.profile = Profile(num_clients)
+        self.profile = Profile(num_clients, self.loader.labels)
         if not self.config.data.IID:
             self.profile.set_primary_label([client.pref for client in self.clients])
 
@@ -180,4 +180,5 @@ class SyncServer(Server):
     def update_profile(self, reports):
         for report in reports:
             self.profile.update(report.client_id, report.loss, report.delay,
-                                self.flatten_weights(report.weights))
+                                self.flatten_weights(report.weights),
+                                self.flatten_weights(report.grads))

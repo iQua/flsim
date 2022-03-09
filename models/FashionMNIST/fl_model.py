@@ -108,6 +108,16 @@ def load_weights(model, weights):
 
     model.load_state_dict(updated_state_dict, strict=False)
 
+
+def extract_grads(model):
+    grads = []
+    for name, weight in model.to(torch.device('cpu')).named_parameters():  # pylint: disable=no-member
+        if weight.requires_grad:
+            grads.append((name, weight.grad))
+
+    return grads
+
+
 def flatten_weights(weights):
     # Flatten weights into vectors
     weight_vecs = []
