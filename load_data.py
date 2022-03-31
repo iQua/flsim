@@ -4,39 +4,6 @@ from torchvision import datasets, transforms
 import utils.dists as dists
 
 
-class Generator(object):
-    """Generate federated learning training and testing data."""
-
-    # Abstract read function
-    def read(self, path):
-        # Read the dataset, set: trainset, testset, labels
-        raise NotImplementedError
-
-    # Group the data by label
-    def group(self):
-        # Create empty dict of labels
-        grouped_data = {label: []
-                        for label in self.labels}  # pylint: disable=no-member
-
-        # Populate grouped data dict
-        for datapoint in self.trainset:  # pylint: disable=all
-            _, label = datapoint  # Extract label
-            label = self.labels[label]
-
-            grouped_data[label].append(  # pylint: disable=no-member
-                datapoint)
-
-        self.trainset = grouped_data  # Overwrite trainset with grouped data
-
-    # Run data generation
-    def generate(self, path):
-        self.read(path)
-        self.trainset_size = len(self.trainset)  # Extract trainset size
-        self.group()
-
-        return self.trainset
-
-
 class Loader(object):
     """Load and pass IID data partitions."""
 
