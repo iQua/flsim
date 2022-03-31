@@ -16,6 +16,9 @@ class Config(object):
     def extract(self):
         config = self.config
 
+        # -- Model --
+        self.model = config['model']
+
         # -- Clients --
         fields = ['total', 'per_round', 'label_distribution',
                   'do_test', 'test_partition', 'selection']
@@ -34,13 +37,16 @@ class Config(object):
         self.data = namedtuple('data', fields)(*params)
 
         # Determine correct data loader
-        assert self.data.IID ^ bool(self.data.bias) ^ bool(self.data.shard)
-        if self.data.IID:
-            self.loader = 'basic'
-        elif self.data.bias:
-            self.loader = 'bias'
-        elif self.data.shard:
-            self.loader = 'shard'
+        if self.model in ['MNIST'. 'FashionMNIST', 'CIFAR-10']:
+            assert self.data.IID ^ bool(self.data.bias) ^ bool(self.data.shard)
+            if self.data.IID:
+                self.loader = 'basic'
+            elif self.data.bias:
+                self.loader = 'bias'
+            elif self.data.shard:
+                self.loader = 'shard'
+        else:
+            self.loader = 'leaf'
 
         # -- Federated learning --
         fields = ['rounds', 'target_accuracy', 'task', 'epochs', 'batch_size']
@@ -48,9 +54,6 @@ class Config(object):
         params = [config['federated_learning'].get(field, defaults[i])
                   for i, field in enumerate(fields)]
         self.fl = namedtuple('fl', fields)(*params)
-
-        # -- Model --
-        self.model = config['model']
 
         # -- Paths --
         fields = ['data', 'model', 'reports', 'plot']

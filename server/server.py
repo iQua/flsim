@@ -45,20 +45,22 @@ class Server(object):
         data = generator.generate(data_path)
         labels = generator.labels
 
-        logging.info('Dataset size: {}'.format(
-            sum([len(x) for x in [data[label] for label in labels]])))
-        logging.debug('Labels ({}): {}'.format(
-            len(labels), labels))
+        if self.loader != 'leaf':
+            logging.info('Dataset size: {}'.format(
+                sum([len(x) for x in [data[label] for label in labels]])))
+            logging.debug('Labels ({}): {}'.format(
+                len(labels), labels))
 
         # Set up data loader
         self.loader = {
             'basic': load_data.Loader(config, generator),
             'bias': load_data.BiasLoader(config, generator),
             'shard': load_data.ShardLoader(config, generator)
+            'leaf': load_data.LEAFLoader(config, generator)
         }[self.config.loader]
 
-        logging.info('Loader: {}, IID: {}'.format(
-            self.config.loader, self.config.data.IID))
+        logging.info('Loader: {}'.format(self.config.loader))
+
 
     def load_model(self):
         import fl_model  # pylint: disable=import-error
@@ -238,7 +240,7 @@ class Server(object):
         # Recieve reports from sample clients
         reports = [client.get_report() for client in sample_clients]
 
-        logging.info('Reports recieved: {}'.format(len(reports)))
+        logging.info('Reports received: {}'.format(len(reports)))
         assert len(reports) == len(sample_clients)
 
         return reports

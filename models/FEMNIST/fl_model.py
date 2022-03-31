@@ -28,15 +28,34 @@ class Generator(load_data.Generator):
 
     # Extract MNIST data using torchvision datasets
     def read(self, path):
-        train_dataset = {}
+        self.trainset = {}
+        self.labels = []
         train_dir = os.path.join(path, 'train')
+
         for file in os.listdir(train_dir):
             with open(os.path.join(train_dir, file)) as json_file:
+                print('loading {}'.format(os.path.join(train_dir, file)))
                 data = json.load(json_file)
-                train_dataset.update(data)
+                self.trainset.update(data)
+                for user in data['users']:
+                    self.labels += data['user_data'][user]['y']
+                    self.labels = list(set(self.labels))
 
+        self.labels.sort()
 
+        self.testset = {}
+        test_dir = os.path.join(path, 'test')
 
+        for file in os.listdir(test_dir):
+            with open(os.path.join(test_dir, file)) as json_file:
+                print('loading {}'.format(os.path.join(test_dir, file)))
+                data = json.load(json_file)
+                self.testset.update(data)
+
+    def generate(self, path):
+        self.read(path)
+
+        return self.trainset
 
 
 class Net(nn.Module):

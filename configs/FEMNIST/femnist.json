@@ -1,6 +1,8 @@
 {
+    "model": "FEMNIST",
     "clients": {
-        "per_round": 50,
+        "total": 100,
+        "per_round": 10,
         "do_test": false
     },
     "data": {},
@@ -11,9 +13,8 @@
         "epochs": 5,
         "batch_size": 100
     },
-    "model": "FEMNIST",
     "paths": {
-        "data": "~/Github/leaf/data/femnist/data/",
+        "data": "../leaf/data/femnist/data",
         "model": "./models"
     },
     "server": "sync",

@@ -1,4 +1,5 @@
 {
+    "model": "CIFAR-10",
     "clients": {
         "total": 50,
         "per_round": 50,
@@ -23,7 +24,6 @@
         "epochs": 5,
         "batch_size": 100
     },
-    "model": "CIFAR-10",
     "paths": {
         "data": "./data",
         "model": "./models"

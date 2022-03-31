@@ -4,6 +4,39 @@ from torchvision import datasets, transforms
 import utils.dists as dists
 
 
+class Generator(object):
+    """Generate federated learning training and testing data."""
+
+    # Abstract read function
+    def read(self, path):
+        # Read the dataset, set: trainset, testset, labels
+        raise NotImplementedError
+
+    # Group the data by label
+    def group(self):
+        # Create empty dict of labels
+        grouped_data = {label: []
+                        for label in self.labels}  # pylint: disable=no-member
+
+        # Populate grouped data dict
+        for datapoint in self.trainset:  # pylint: disable=all
+            _, label = datapoint  # Extract label
+            label = self.labels[label]
+
+            grouped_data[label].append(  # pylint: disable=no-member
+                datapoint)
+
+        self.trainset = grouped_data  # Overwrite trainset with grouped data
+
+    # Run data generation
+    def generate(self, path):
+        self.read(path)
+        self.trainset_size = len(self.trainset)  # Extract trainset size
+        self.group()
+
+        return self.trainset
+
+
 class Loader(object):
     """Load and pass IID data partitions."""
 
@@ -141,3 +174,56 @@ class ShardLoader(Loader):
         random.shuffle(partition)
 
         return partition
+
+
+class LEAFLoader(object):
+    """Load and pass IID data partitions."""
+
+    def __init__(self, config, generator):
+        # Get data from generator
+        self.config = config
+        self.trainset = generator.trainset
+        self.testset = generator.testset
+        self.labels = generator.labels
+        self.trainset_size = generator.trainset_size
+
+        # Store used data seperately
+        self.used = {label: [] for label in self.labels}
+        self.used['testset'] = []
+
+    def extract(self, label, n):
+        if len(self.trainset[label]) > n:
+            extracted = self.trainset[label][:n]  # Extract data
+            self.used[label].extend(extracted)  # Move data to used
+            del self.trainset[label][:n]  # Remove from trainset
+            return extracted
+        else:
+            logging.warning('Insufficient data in label: {}'.format(label))
+            logging.warning('Dumping used data for reuse')
+
+            # Unmark data as used
+            for label in self.labels:
+                self.trainset[label].extend(self.used[label])
+                self.used[label] = []
+
+            # Extract replenished data
+            return self.extract(label, n)
+
+    def get_partition(self, partition_size):
+        # Get an partition uniform across all labels
+
+        # Use uniform distribution
+        dist = dists.uniform(partition_size, len(self.labels))
+
+        partition = []  # Extract data according to distribution
+        for i, label in enumerate(self.labels):
+            partition.extend(self.extract(label, dist[i]))
+
+        # Shuffle data partition
+        random.shuffle(partition)
+
+        return partition
+
+    def get_testset(self):
+        # Return the entire testset
+        return self.testset
