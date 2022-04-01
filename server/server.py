@@ -149,6 +149,10 @@ class Server(object):
             clients.append(new_client)
 
         logging.info('Total clients: {}'.format(len(clients)))
+        logging.info('Number of train samples on clients: {}'.format(
+            self.loader.trainset['num_samples']))
+        logging.info('Number of test samples on clients: {}'.format(
+            self.loader.testset['num_samples']))
 
         self.clients = clients
 
