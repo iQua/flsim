@@ -96,7 +96,7 @@ def get_trainloader(trainset, batch_size):
     x_train = np.reshape(x_train, (-1, 1, IMAGE_SIZE, IMAGE_SIZE))
     x_train = torch.Tensor(x_train)
     y_train = np.array(trainset['y'], dtype=np.int32)
-    y_train = torch.Tensor(y_train)
+    y_train = torch.Tensor(y_train).type(torch.int64)
 
     train_dataset = TensorDataset(x_train, y_train)
 
@@ -112,7 +112,7 @@ def get_testloader(testset, batch_size):
     x_test = np.reshape(x_test, (-1, 1, IMAGE_SIZE, IMAGE_SIZE))
     x_test = torch.Tensor(x_test)
     y_test = np.array(testset['y'], dtype=np.int32)
-    y_test = torch.Tensor(y_test)
+    y_test = torch.Tensor(y_test).type(torch.int64)
 
     test_dataset = TensorDataset(x_test, y_test)
 
