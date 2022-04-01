@@ -70,17 +70,20 @@ class Generator(load_data.Generator):
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, 5, 1)
-        self.conv2 = nn.Conv2d(32, 64, 5, 1)
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=5, stride=1, padding=(2,2))
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=(2,2))
         self.fc1 = nn.Linear(7 * 7 * 64, 2048)
         self.fc2 = nn.Linear(2048, NUM_CLASSES)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
-        print('conv1', x.shape)
+        print('after conv1', x.shape)
         x = F.max_pool2d(x, 2, 2)
+        print('before conv2', x.shape)
         x = F.relu(self.conv2(x))
+        print('after conv2', x.shape)
         x = F.max_pool2d(x, 2, 2)
+        print('before reshape', x.shape)
         x = x.view(-1, 7 * 7 * 64)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
