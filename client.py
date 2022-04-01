@@ -144,13 +144,13 @@ class Client(object):
     def train(self, reg=None):
         import fl_model  # pylint: disable=import-error
 
-        logging.info('Training on client #{}, mean delay {}s'.format(
-            self.client_id, self.delay))
-
         # Perform model training
         trainloader = fl_model.get_trainloader(self.trainset, self.batch_size)
         self.loss = fl_model.train(self.model, trainloader,
-                       self.optimizer, self.epochs, reg)
+                                   self.optimizer, self.epochs, reg)
+
+        logging.info('Training on client #{}, loss {} mean delay {}s'.format(
+            self.client_id, self.loss, self.delay))
 
         # Extract model weights and biases
         weights = fl_model.extract_weights(self.model)
