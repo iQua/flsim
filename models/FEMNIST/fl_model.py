@@ -10,6 +10,8 @@ import time
 import json
 import os
 
+IMAGE_SIZE = 28
+
 # Training settings
 lr = 0.01
 momentum = 0.9
@@ -36,7 +38,7 @@ class Generator(load_data.Generator):
 
         for file in os.listdir(train_dir):
             with open(os.path.join(train_dir, file)) as json_file:
-                print('loading {}'.format(os.path.join(train_dir, file)))
+                logging.info('loading {}'.format(os.path.join(train_dir, file)))
                 data = json.load(json_file)
                 self.trainset.update(data)
                 for user in data['users']:
@@ -53,7 +55,7 @@ class Generator(load_data.Generator):
 
         for file in os.listdir(test_dir):
             with open(os.path.join(test_dir, file)) as json_file:
-                print('loading {}'.format(os.path.join(test_dir, file)))
+                logging.info('loading {}'.format(os.path.join(test_dir, file)))
                 data = json.load(json_file)
                 self.testset.update(data)
 
@@ -91,9 +93,10 @@ def get_trainloader(trainset, batch_size):
     # Convert the dictionary-format of trainset (with keys of 'x' and 'y') to
     # TensorDataset, then create the DataLoader from it
     x_train = np.array(trainset['x'], dtype=np.float32)
-    x_train = torch.Tensor(x_train, device=device)
+    x_train = np.reshape(x_train, (-1, 1, IMAGE_SIZE, IMAGE_SIZE))
+    x_train = torch.Tensor(x_train)
     y_train = np.array(trainset['y'], dtype=np.int32)
-    y_train = torch.Tensor(y_train, device=device)
+    y_train = torch.Tensor(y_train)
 
     train_dataset = TensorDataset(x_train, y_train)
 
@@ -106,9 +109,10 @@ def get_testloader(testset, batch_size):
     # Convert the dictionary-format of testset (with keys of 'x' and 'y') to
     # TensorDataset, then create the DataLoader from it
     x_test = np.array(testset['x'], dtype=np.float32)
-    x_test = torch.Tensor(x_test, dtype=torch.float32)
+    x_test = np.reshape(x_test, (-1, 1, IMAGE_SIZE, IMAGE_SIZE))
+    x_test = torch.Tensor(x_test)
     y_test = np.array(testset['y'], dtype=np.int32)
-    y_test = torch.Tensor(y_test, dtype=torch.int32)
+    y_test = torch.Tensor(y_test)
 
     test_dataset = TensorDataset(x_test, y_test)
 

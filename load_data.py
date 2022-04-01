@@ -185,7 +185,8 @@ class LEAFLoader(object):
         self.trainset = generator.trainset
         self.testset = generator.testset
         self.labels = generator.labels
-        self.num_clients = len(generator.trainset['users'])
+        if config.loader == 'leaf':
+            self.num_clients = len(generator.trainset['users'])
 
     def extract(self, client_id):
         # Given client_id, extract the data of that user
