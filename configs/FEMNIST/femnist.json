@@ -2,7 +2,7 @@
     "model": "FEMNIST",
     "clients": {
         "total": 100,
-        "per_round": 1,
+        "per_round": 10,
         "do_test": false
     },
     "data": {},

@@ -77,13 +77,9 @@ class Net(nn.Module):
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
-        print('after conv1', x.shape)
         x = F.max_pool2d(x, 2, 2)
-        print('before conv2', x.shape)
         x = F.relu(self.conv2(x))
-        print('after conv2', x.shape)
         x = F.max_pool2d(x, 2, 2)
-        print('before reshape', x.shape)
         x = x.view(-1, 7 * 7 * 64)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
