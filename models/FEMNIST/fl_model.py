@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torchvision import datasets, transforms
+from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 import time
 import json
@@ -30,6 +30,8 @@ class Generator(load_data.Generator):
     def read(self, path):
         self.trainset = {}
         self.labels = []
+        trainset_size = 0
+
         train_dir = os.path.join(path, 'train')
 
         for file in os.listdir(train_dir):
@@ -41,7 +43,10 @@ class Generator(load_data.Generator):
                     self.labels += data['user_data'][user]['y']
                     self.labels = list(set(self.labels))
 
+                    trainset_size += len(data['user_data'][user]['y'])
+
         self.labels.sort()
+        self.trainset_size = trainset_size
 
         self.testset = {}
         test_dir = os.path.join(path, 'test')
@@ -51,6 +56,7 @@ class Generator(load_data.Generator):
                 print('loading {}'.format(os.path.join(test_dir, file)))
                 data = json.load(json_file)
                 self.testset.update(data)
+
 
     def generate(self, path):
         self.read(path)
@@ -82,11 +88,33 @@ def get_optimizer(model):
 
 
 def get_trainloader(trainset, batch_size):
-    return torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True)
+    # Convert the dictionary-format of trainset (with keys of 'x' and 'y') to
+    # TensorDataset, then create the DataLoader from it
+    x_train = np.array(trainset['x'], dtype=np.float32)
+    x_train = torch.Tensor(x_train, device=device)
+    y_train = np.array(trainset['y'], dtype=np.int32)
+    y_train = torch.Tensor(y_train, device=device)
+
+    train_dataset = TensorDataset(x_train, y_train)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+    return train_loader
 
 
 def get_testloader(testset, batch_size):
-    return torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=True)
+    # Convert the dictionary-format of testset (with keys of 'x' and 'y') to
+    # TensorDataset, then create the DataLoader from it
+    x_test = np.array(testset['x'], dtype=np.float32)
+    x_test = torch.Tensor(x_test, dtype=torch.float32)
+    y_test = np.array(testset['y'], dtype=np.int32)
+    y_test = torch.Tensor(y_test, dtype=torch.int32)
+
+    test_dataset = TensorDataset(x_test, y_test)
+
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+
+    return test_loader
 
 
 def extract_weights(model):

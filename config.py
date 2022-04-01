@@ -19,6 +19,18 @@ class Config(object):
         # -- Model --
         self.model = config['model']
 
+        # Determine correct data loader
+        if self.model in ['MNIST', 'FashionMNIST', 'CIFAR-10']:
+            assert self.data.IID ^ bool(self.data.bias) ^ bool(self.data.shard)
+            if self.data.IID:
+                self.loader = 'basic'
+            elif self.data.bias:
+                self.loader = 'bias'
+            elif self.data.shard:
+                self.loader = 'shard'
+        else:
+            self.loader = 'leaf'
+
         # -- Clients --
         fields = ['total', 'per_round', 'label_distribution',
                   'do_test', 'test_partition', 'selection']
@@ -35,18 +47,6 @@ class Config(object):
         params = [config['data'].get(field, defaults[i])
                   for i, field in enumerate(fields)]
         self.data = namedtuple('data', fields)(*params)
-
-        # Determine correct data loader
-        if self.model in ['MNIST'. 'FashionMNIST', 'CIFAR-10']:
-            assert self.data.IID ^ bool(self.data.bias) ^ bool(self.data.shard)
-            if self.data.IID:
-                self.loader = 'basic'
-            elif self.data.bias:
-                self.loader = 'bias'
-            elif self.data.shard:
-                self.loader = 'shard'
-        else:
-            self.loader = 'leaf'
 
         # -- Federated learning --
         fields = ['rounds', 'target_accuracy', 'task', 'epochs', 'batch_size']

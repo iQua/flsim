@@ -62,6 +62,23 @@ class SyncServer(Server):
         if not self.config.data.IID:
             self.profile.set_primary_label([client.pref for client in self.clients])
 
+    def make_clients_leaf(self):
+        super().make_clients_leaf()
+
+        # Set link speed for clients
+        speed = []
+        for client in self.clients:
+            client.set_link(self.config)
+            speed.append(client.speed_mean)
+
+        logging.info('Speed distribution: {} Kbps'.format([s for s in speed]))
+
+        # Initiate client profile of loss and delay
+        self.profile = Profile(self.num_clients, self.loader.labels)
+        if not self.config.data.IID:
+            self.profile.set_primary_label(
+                [client.pref for client in self.clients])
+
     # Run synchronous federated learning
     def run(self):
         rounds = self.config.fl.rounds

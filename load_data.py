@@ -185,44 +185,13 @@ class LEAFLoader(object):
         self.trainset = generator.trainset
         self.testset = generator.testset
         self.labels = generator.labels
-        self.trainset_size = generator.trainset_size
+        self.num_clients = len(generator.trainset['users'])
 
-        # Store used data seperately
-        self.used = {label: [] for label in self.labels}
-        self.used['testset'] = []
-
-    def extract(self, label, n):
-        if len(self.trainset[label]) > n:
-            extracted = self.trainset[label][:n]  # Extract data
-            self.used[label].extend(extracted)  # Move data to used
-            del self.trainset[label][:n]  # Remove from trainset
-            return extracted
-        else:
-            logging.warning('Insufficient data in label: {}'.format(label))
-            logging.warning('Dumping used data for reuse')
-
-            # Unmark data as used
-            for label in self.labels:
-                self.trainset[label].extend(self.used[label])
-                self.used[label] = []
-
-            # Extract replenished data
-            return self.extract(label, n)
-
-    def get_partition(self, partition_size):
-        # Get an partition uniform across all labels
-
-        # Use uniform distribution
-        dist = dists.uniform(partition_size, len(self.labels))
-
-        partition = []  # Extract data according to distribution
-        for i, label in enumerate(self.labels):
-            partition.extend(self.extract(label, dist[i]))
-
-        # Shuffle data partition
-        random.shuffle(partition)
-
-        return partition
+    def extract(self, client_id):
+        # Given client_id, extract the data of that user
+        # The extracted data is in a dictionary format with keys of 'x' and 'y'
+        user_name = self.trainset['users'][client_id]
+        return self.trainset['user_data'][user_name]
 
     def get_testset(self):
         # Return the entire testset

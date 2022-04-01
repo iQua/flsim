@@ -21,7 +21,6 @@ class Server(object):
         logging.info('Booting {} server...'.format(self.config.server))
 
         model_path = self.config.paths.model
-        total_clients = self.config.clients.total
 
         # Add fl_model to import path
         sys.path.append(model_path)
@@ -29,7 +28,12 @@ class Server(object):
         # Set up simulated server
         self.load_data()
         self.load_model()
-        self.make_clients(total_clients)
+        if self.config.loader != 'leaf':
+            self.num_clients = self.config.clients.total
+            self.make_clients(self.num_clients)
+        else:
+            self.num_clients = self.loader.num_clients
+            self.make_clients_leaf()
 
     def load_data(self):
         import fl_model  # pylint: disable=import-error
@@ -45,7 +49,7 @@ class Server(object):
         data = generator.generate(data_path)
         labels = generator.labels
 
-        if self.loader != 'leaf':
+        if self.config.loader != 'leaf':
             logging.info('Dataset size: {}'.format(
                 sum([len(x) for x in [data[label] for label in labels]])))
             logging.debug('Labels ({}): {}'.format(
@@ -55,7 +59,7 @@ class Server(object):
         self.loader = {
             'basic': load_data.Loader(config, generator),
             'bias': load_data.BiasLoader(config, generator),
-            'shard': load_data.ShardLoader(config, generator)
+            'shard': load_data.ShardLoader(config, generator),
             'leaf': load_data.LEAFLoader(config, generator)
         }[self.config.loader]
 
@@ -129,6 +133,22 @@ class Server(object):
 
             # Send data partition to all clients
             [self.set_client_data(client) for client in clients]
+
+        self.clients = clients
+
+    def make_clients_leaf(self):
+        # Make clients from the leaf dataset
+        clients = []
+        for client_id in range(self.loader.num_clients):
+            # Create new client
+            new_client = client.Client(client_id)
+
+            # Set the client data statically
+            new_client.set_data(self.loader.extract(client_id), self.config)
+
+            clients.append(new_client)
+
+        logging.info('Total clients: {}'.format(len(clients)))
 
         self.clients = clients
 
