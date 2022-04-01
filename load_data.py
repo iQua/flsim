@@ -195,5 +195,9 @@ class LEAFLoader(object):
         return self.trainset['user_data'][user_name]
 
     def get_testset(self):
-        # Return the entire testset
-        return self.testset
+        # Return the entire testset of all users
+        # The returned testset is in a dictionary format with keys of 'x' and 'y'
+        testset = {}
+        for user in self.testset['users']:
+            testset.update(self.testset['user_data'][user])
+        return testset
