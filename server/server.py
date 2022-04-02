@@ -29,11 +29,11 @@ class Server(object):
         self.load_data()
         self.load_model()
         if self.config.loader != 'leaf':
-            self.num_clients = self.config.clients.total
-            self.make_clients(self.num_clients)
+            num_clients = self.config.clients.total
+            self.make_clients(num_clients)
         else:
-            self.num_clients = self.loader.num_clients
-            self.make_clients_leaf()
+            num_clients = min(self.config.clients.total, self.loader.num_clients)
+            self.make_clients_leaf(num_clients)
 
     def load_data(self):
         import fl_model  # pylint: disable=import-error
@@ -136,23 +136,25 @@ class Server(object):
 
         self.clients = clients
 
-    def make_clients_leaf(self):
+    def make_clients_leaf(self, num_clients):
         # Make clients from the leaf dataset
         clients = []
-        for client_id in range(self.loader.num_clients):
+        select_loader_client = np.random.choice(np.arange(self.loader.num_clients),
+                                                num_clients, replace=False)
+        for client_id in range(num_clients):
             # Create new client
             new_client = client.Client(client_id)
 
             # Set the client data statically
-            new_client.set_data(self.loader.extract(client_id), self.config)
+            new_client.set_data(self.loader.extract(select_loader_client[client_id]), self.config)
 
             clients.append(new_client)
 
-        logging.info('Total clients: {}'.format(len(clients)))
+        logging.info('Total clients: {} LEAF clients: {}'.format(num_clients, self.loader.num_clients))
         logging.info('Number of train samples on clients: {}'.format(
-            self.loader.trainset['num_samples']))
+            [self.loader.trainset['num_samples'][i] for i in select_loader_client]))
         logging.info('Number of test samples on clients: {}'.format(
-            self.loader.testset['num_samples']))
+            [self.loader.testset['num_samples'][i] for i in select_loader_client]))
 
         self.clients = clients
 

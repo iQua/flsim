@@ -54,8 +54,18 @@ class Client(object):
         # Extract trainset, testset (if applicable)
         data = self.data
         if do_test:  # Partition for testset if applicable
-            self.trainset = data[:int(len(data) * (1 - test_partition))]
-            self.testset = data[int(len(data) * (1 - test_partition)):]
+            if config.loader != 'leaf':
+                self.trainset = data[:int(len(data) * (1 - test_partition))]
+                self.testset = data[int(len(data) * (1 - test_partition)):]
+            else:  # Consider the dictionary-like format of leaf dataset
+                self.trainset = {
+                    'x': data['x'][:int(len(data) * (1 - test_partition))],
+                    'y': data['y'][:int(len(data) * (1 - test_partition))]
+                }
+                self.testset = {
+                    'x': data['x'][int(len(data) * (1 - test_partition)):],
+                    'y': data['y'][int(len(data) * (1 - test_partition)):]
+                }
         else:
             self.trainset = data
 

@@ -62,8 +62,8 @@ class SyncServer(Server):
         if not self.config.data.IID:
             self.profile.set_primary_label([client.pref for client in self.clients])
 
-    def make_clients_leaf(self):
-        super().make_clients_leaf()
+    def make_clients_leaf(self, num_clients):
+        super().make_clients_leaf(num_clients)
 
         # Set link speed for clients
         speed = []
@@ -74,7 +74,7 @@ class SyncServer(Server):
         logging.info('Speed distribution: {} Kbps'.format([s for s in speed]))
 
         # Initiate client profile of loss and delay
-        self.profile = Profile(self.num_clients, self.loader.labels)
+        self.profile = Profile(num_clients, self.loader.labels)
         if not self.config.data.IID:
             self.profile.set_primary_label(
                 [client.pref for client in self.clients])
