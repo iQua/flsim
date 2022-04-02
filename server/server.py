@@ -150,13 +150,17 @@ class Server(object):
 
             clients.append(new_client)
 
-        logging.info('Total clients: {} LEAF clients: {}'.format(num_clients, self.loader.num_clients))
+        self.clients = clients
+
+        logging.info('Total clients: {} Total samples: {}'.format(num_clients,
+            sum([len(client.data['x']) for client in self.clients])))
+        logging.info('LEAF clients: {} LEAF samples: {}'.format(self.loader.num_clients,
+            sum([len(self.loader.trainset['user_data'][user]['x']) for user in self.loader.trainset['users']])))
+
         logging.info('Number of train samples on clients: {}'.format(
             [self.loader.trainset['num_samples'][i] for i in select_loader_client]))
         logging.info('Number of test samples on clients: {}'.format(
             [self.loader.testset['num_samples'][i] for i in select_loader_client]))
-
-        self.clients = clients
 
     # Run federated learning
     def run(self):

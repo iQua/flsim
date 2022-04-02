@@ -49,6 +49,7 @@ class Generator(load_data.Generator):
                     trainset_size += len(data['user_data'][user]['y'])
 
         self.labels.sort()
+        print(len(self.labels))
         self.trainset_size = trainset_size
 
         self.testset = {}
