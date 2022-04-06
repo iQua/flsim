@@ -172,7 +172,10 @@ class SyncServer(Server):
         if self.config.clients.do_test:  # Get average accuracy from client reports
             accuracy = self.accuracy_averaging(reports)
         else:  # Test updated model on server
-            testset = self.loader.get_testset()
+            if self.config.loader != 'leaf':
+                testset = self.loader.get_testset()
+            else:
+                testset = self.loader.get_testset(self.select_loader_client)
             batch_size = self.config.fl.batch_size
             testloader = fl_model.get_testloader(testset, batch_size)
             accuracy = fl_model.test(self.model, testloader)

@@ -31,7 +31,7 @@ class Generator(load_data.Generator):
 
     # Extract MNIST data using torchvision datasets
     def read(self, path):
-        self.trainset = {}
+        self.trainset = {'users': [], 'user_data': {}, 'num_samples': []}
         self.labels = []
         trainset_size = 0
 
@@ -41,7 +41,9 @@ class Generator(load_data.Generator):
             with open(os.path.join(train_dir, file)) as json_file:
                 logging.info('loading {}'.format(os.path.join(train_dir, file)))
                 data = json.load(json_file)
-                self.trainset.update(data)
+                self.trainset['users'] += data['users']
+                self.trainset['user_data'].update(data['user_data'])
+                self.trainset['num_samples'] += data['num_samples']
                 for user in data['users']:
                     self.labels += data['user_data'][user]['y']
                     self.labels = list(set(self.labels))
@@ -52,14 +54,16 @@ class Generator(load_data.Generator):
         print(len(self.labels))
         self.trainset_size = trainset_size
 
-        self.testset = {}
+        self.testset = {'users': [], 'user_data': {}, 'num_samples': []}
         test_dir = os.path.join(path, 'test')
 
         for file in os.listdir(test_dir):
             with open(os.path.join(test_dir, file)) as json_file:
                 logging.info('loading {}'.format(os.path.join(test_dir, file)))
                 data = json.load(json_file)
-                self.testset.update(data)
+                self.testset['users'] += data['users']
+                self.testset['user_data'].update(data['user_data'])
+                self.testset['num_samples'] += data['num_samples']
 
 
     def generate(self, path):

@@ -139,14 +139,17 @@ class Server(object):
     def make_clients_leaf(self, num_clients):
         # Make clients from the leaf dataset
         clients = []
-        select_loader_client = np.random.choice(np.arange(self.loader.num_clients),
-                                                num_clients, replace=False)
+        self.select_loader_client = np.random.choice(np.arange(self.loader.num_clients),
+                                                     num_clients, replace=False)
         for client_id in range(num_clients):
             # Create new client
             new_client = client.Client(client_id)
 
             # Set the client data statically
-            new_client.set_data(self.loader.extract(select_loader_client[client_id]), self.config)
+            new_client.set_data(
+                self.loader.extract(self.select_loader_client[client_id]),
+                self.config
+            )
 
             clients.append(new_client)
 
@@ -158,9 +161,9 @@ class Server(object):
             sum([len(self.loader.trainset['user_data'][user]['x']) for user in self.loader.trainset['users']])))
 
         logging.info('Number of train samples on clients: {}'.format(
-            [self.loader.trainset['num_samples'][i] for i in select_loader_client]))
+            [self.loader.trainset['num_samples'][i] for i in self.select_loader_client]))
         logging.info('Number of test samples on clients: {}'.format(
-            [self.loader.testset['num_samples'][i] for i in select_loader_client]))
+            [self.loader.testset['num_samples'][i] for i in self.select_loader_client]))
 
     # Run federated learning
     def run(self):
@@ -226,7 +229,10 @@ class Server(object):
         if self.config.clients.do_test:  # Get average accuracy from client reports
             accuracy = self.accuracy_averaging(reports)
         else:  # Test updated model on server
-            testset = self.loader.get_testset()
+            if self.config.loader != 'leaf':
+                testset = self.loader.get_testset()
+            else:
+                testset = self.loader.get_testset(self.select_loader_client)
             batch_size = self.config.fl.batch_size
             testloader = fl_model.get_testloader(testset, batch_size)
             accuracy = fl_model.test(self.model, testloader)

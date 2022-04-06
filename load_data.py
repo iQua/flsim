@@ -189,15 +189,16 @@ class LEAFLoader(object):
             self.num_clients = len(generator.trainset['users'])
 
     def extract(self, client_id):
-        # Given client_id, extract the data of that user
+        # Given client_id, extract the training data of that user
         # The extracted data is in a dictionary format with keys of 'x' and 'y'
         user_name = self.trainset['users'][client_id]
         return self.trainset['user_data'][user_name]
 
-    def get_testset(self):
-        # Return the entire testset of all users
-        # The returned testset is in a dictionary format with keys of 'x' and 'y'
-        testset = {}
+    def get_testset(self, loader_id):
+        # Extract the testing data of users in the list of loader_id
+        # The extracted data is in a dictionary format with keys of 'x' and 'y'
+        testset = {'x': [], 'y': []}
         for user in self.testset['users']:
-            testset.update(self.testset['user_data'][user])
+            testset['x'] += self.testset['user_data'][user]['x']
+            testset['y'] += self.testset['user_data'][user]['y']
         return testset

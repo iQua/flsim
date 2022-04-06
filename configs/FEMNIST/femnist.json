@@ -1,8 +1,8 @@
 {
     "model": "FEMNIST",
     "clients": {
-        "total": 100,
-        "per_round": 10,
+        "total": 2,
+        "per_round": 2,
         "do_test": false
     },
     "data": {},
