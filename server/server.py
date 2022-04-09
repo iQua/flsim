@@ -146,8 +146,10 @@ class Server(object):
             new_client = client.Client(client_id)
 
             # Set the client data statically
-            new_client.set_data(
-                self.loader.extract(self.select_loader_client[client_id]),
+            train_data, test_data = self.loader.extract(self.select_loader_client[client_id])
+            new_client.set_data_leaf(
+                train_data,
+                test_data,
                 self.config
             )
 

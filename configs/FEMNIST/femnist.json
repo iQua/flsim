@@ -3,11 +3,11 @@
     "clients": {
         "total": 1,
         "per_round": 1,
-        "do_test": false
+        "do_test": true
     },
     "data": {},
     "federated_learning": {
-        "rounds": 20,
+        "rounds": 200,
         "target_accuracy": 0.85,
         "task": "train",
         "epochs": 5,

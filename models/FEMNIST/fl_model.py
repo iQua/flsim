@@ -14,7 +14,7 @@ IMAGE_SIZE = 28
 NUM_CLASSES = 62
 
 # Training settings
-lr = 0.004
+lr = 0.01
 momentum = 0.9
 log_interval = 10
 rou = 1

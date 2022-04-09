@@ -54,20 +54,25 @@ class Client(object):
         # Extract trainset, testset (if applicable)
         data = self.data
         if do_test:  # Partition for testset if applicable
-            if config.loader != 'leaf':
-                self.trainset = data[:int(len(data) * (1 - test_partition))]
-                self.testset = data[int(len(data) * (1 - test_partition)):]
-            else:  # Consider the dictionary-like format of leaf dataset
-                self.trainset = {
-                    'x': data['x'][:int(len(data) * (1 - test_partition))],
-                    'y': data['y'][:int(len(data) * (1 - test_partition))]
-                }
-                self.testset = {
-                    'x': data['x'][int(len(data) * (1 - test_partition)):],
-                    'y': data['y'][int(len(data) * (1 - test_partition)):]
-                }
+            self.trainset = data[:int(len(data) * (1 - test_partition))]
+            self.testset = data[int(len(data) * (1 - test_partition)):]
         else:
             self.trainset = data
+
+    # Federated learning phases
+    def set_data_leaf(self, train_data, test_data, config):
+        # Extract from config
+        do_test = self.do_test = config.clients.do_test
+
+        # Download data
+        self.data = self.download(train_data)
+
+        # Extract trainset, testset (if applicable)
+        if do_test:  # Partition for testset if applicable
+            self.trainset = train_data
+            self.testset = test_data
+        else:
+            self.trainset = train_data
 
     def set_link(self, config):
         # Set the Gaussian distribution for link speed in Kbytes
@@ -167,11 +172,7 @@ class Client(object):
         grads = fl_model.extract_grads(self.model)
 
         # Generate report for server
-        self.report = Report(self)
-        self.report.weights = weights
-        self.report.grads = grads
-        self.report.loss = self.loss
-        self.report.delay = self.delay
+        self.report = Report(self, weights, grads, self.loss, self.delay)
 
         # Perform model testing if applicable
         if self.do_test:
@@ -186,6 +187,11 @@ class Client(object):
 class Report(object):
     """Federated learning client report."""
 
-    def __init__(self, client):
+    def __init__(self, client, weights, grads, loss, delay):
         self.client_id = client.client_id
         self.num_samples = len(client.data)
+        self.weights = weights
+        self.grads = grads
+        self.loss = loss
+        self.delay = delay
+

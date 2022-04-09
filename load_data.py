@@ -192,13 +192,15 @@ class LEAFLoader(object):
         # Given client_id, extract the training data of that user
         # The extracted data is in a dictionary format with keys of 'x' and 'y'
         user_name = self.trainset['users'][client_id]
-        return self.trainset['user_data'][user_name]
+        return self.trainset['user_data'][user_name], self.testset['user_data'][user_name]
 
-    def get_testset(self, loader_id):
+    def get_testset(self, client_id):
         # Extract the testing data of users in the list of loader_id
         # The extracted data is in a dictionary format with keys of 'x' and 'y'
-        testset = {'x': [], 'y': []}
-        for user in self.testset['users']:
-            testset['x'] += self.testset['user_data'][user]['x']
-            testset['y'] += self.testset['user_data'][user]['y']
-        return testset
+        #testset = {'x': [], 'y': []}
+        #for i in client_id:
+        #    user = self.testset['users'][i]
+        #    testset['x'] += self.testset['user_data'][user]['x']
+        #    testset['y'] += self.testset['user_data'][user]['y']
+        user_name = self.trainset['users'][client_id]
+        return self.testset['user_data'][user_name]
