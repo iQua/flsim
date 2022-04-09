@@ -1,14 +1,14 @@
 {
     "model": "FEMNIST",
     "clients": {
-        "total": 1,
-        "per_round": 1,
+        "total": 50,
+        "per_round": 5,
         "do_test": true
     },
     "data": {},
     "federated_learning": {
         "rounds": 200,
-        "target_accuracy": 0.85,
+        "target_accuracy": 0.95,
         "task": "train",
         "epochs": 5,
         "batch_size": 100
